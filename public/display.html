@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tableau des scores - GSDDM</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="./js/display.js"></script>
+  <script src="./js/admin.js"></script>
+  <style>
+    /* === Liquid Glass Style v2 === */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, #012970, #024ea2, #012970);
+      background-size: 400% 400%;
+      animation: bgAnimation 20s ease infinite;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      justify-content: space-between;
+    }
+
+    /* Animation background */
+    @keyframes bgAnimation {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    .title {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 12px;
+      backdrop-filter: blur(20px);
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      margin: 20px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    .title h1 {
+      font-size: 28px;
+      font-weight: bold;
+      text-align: center;
+      color: #fff;
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .title small {
+      color: #cce0ff;
+    }
+
+    .title img {
+      border-radius: 12%;
+      width: 10%;
+      height: auto;
+      padding: 12px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Conteneur principal */
+    .container {
+      text-align: center;
+      margin: 30px auto;
+      padding: 20px;
+      width: 80%;
+      max-width: 1000px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 24px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    #match-title {
+      font-size: 36px;
+      margin-bottom: 20px;
+      color: #ffffff;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+    }
+
+    /* Teams */
+    .teams {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+
+    .team {
+      flex: 1;
+      padding: 20px;
+      margin: 10px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(15px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .team h2 {
+      font-size: 26px;
+      margin-bottom: 15px;
+      color: #cce0ff;
+    }
+
+    .team p {
+      font-size: 64px;
+      font-weight: bold;
+      color: #ffffff;
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+      transition: transform 0.3s ease, color 0.3s ease;
+    }
+
+    /* Animation score (au changement de points) */
+    .score-update {
+      animation: scorePulse 0.8s ease;
+    }
+
+    @keyframes scorePulse {
+      0% {
+        transform: scale(1);
+        color: #fff;
+      }
+
+      40% {
+        transform: scale(1.4);
+        color: #ffd700;
+      }
+
+      100% {
+        transform: scale(1);
+        color: #fff;
+      }
+    }
+
+    /* versus */
+    #versus {
+      font-size: 48px;
+      font-weight: bold;
+      padding: 15px 30px;
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(15px);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+      color: #fffa;
+    }
+
+    /* Infos */
+    .info-section {
+      margin: 20px;
+      padding: 12px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #fff;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .info-section marquee {
+      color: #cce0ff;
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      padding: 16px;
+      margin: 0;
+      background: rgba(1, 41, 112, 0.8);
+      backdrop-filter: blur(8px);
+      border-top: 2px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="title d-flex">
+    <img src="images/Image1.jpg" />
+    <center>
+      <h1>Groupe Scolaire David Diop Mendes <br>
+        <small style="font-size: 12px;">Défi du Génie en Herbe (11ᵉ Édition)</small>
+      </h1>
+    </center>
+    <img src="images/image2.jpg" />
+  </div>
+
+  <div class="container">
+    <h1 id="match-title">Score</h1>
+
+    <div class="teams">
+      <div class="team">
+        <h2 id="teamA-name"></h2>
+        <p id="scoreA">0</p>
+        <br>Points
+      </div>
+
+      <div id="versus" style="font-size: 3rem; color: white; text-align: center;">VS</div>
+
+      <div class="team">
+        <h2 id="teamB-name"></h2>
+        <p id="scoreB">0</p>
+        <br>Points
+      </div>
+    </div>
+  </div>
+  <br>
+  <div class="info-section">
+    <marquee behavior="scroll" direction="left"><span id="section-info">En attente d'information...</span></marquee>
+  </div>
+  <br>
+
+  <footer>
+    GSDDM LiveScore | Défi du Génie en Herbe (11ᵉ Édition) | 2025 - 2026 | V 2024.1.7 <br>
+    <div class="documents d-flex space-between"><a href="documents/GSDDM-LiveScore-Documentation.pdf" target="_blank"
+        style="color: #8a9bb8;">Documentation</a> | <a href="documents/Licence MIT.pdf" target="_blank"
+        style="color: #8a9bb8;">Licence</a></div>
+  </footer>
+
+</body>
+<script>
+
+  socket.on('teamNameUpdated', ({ team, name }) => {
+    if (team === 'A') {
+      document.getElementById('teamA-name').textContent = name;
+    } else if (team === 'B') {
+      document.getElementById('teamB-name').textContent = name;
+    }
+  });
+</script>
+<script>
+  const socket = io();
+
+  const teamANameEl = document.getElementById("teamA-name");
+  const teamBNameEl = document.getElementById("teamB-name");
+  const scoreAEl = document.getElementById("scoreA");
+  const scoreBEl = document.getElementById("scoreB");
+
+  // Afficher le nouveau match
+  socket.on("currentMatch", (match) => {
+    teamANameEl.textContent = match.teamA || "Équipe A";
+    teamBNameEl.textContent = match.teamB || "Équipe B";
+
+    // Réinitialiser scores
+    scoreAEl.textContent = "0";
+    scoreBEl.textContent = "0";
+  });
+
+  // Mettre à jour les scores en direct
+  socket.on("scoreUpdate", (scores) => {
+    scoreAEl.textContent = scores.A;
+    scoreBEl.textContent = scores.B;
+  });
+</script>
+
+</html>

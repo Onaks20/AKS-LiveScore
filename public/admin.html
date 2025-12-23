@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin — G.E.H</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+  <script src="/socket.io/socket.io.js"></script>
+  <script defer src="./js/admin.js"></script>
+  <script src="./js/display.js"></script>
+</head>
+<style>
+  /* ===============================
+   ADMIN PANEL - DARK MODE
+   =============================== */
+
+  :root {
+    --primary: #012970;
+    --primary-light: #1b3f8a;
+    --accent: #00d4ff;
+    --danger: #ff4d4d;
+    --success: #27ae60;
+    --bg: #0b0f1a;
+    --card-bg: #141a2a;
+    --border: #1f2a40;
+    --text-light: #dbe4ff;
+    --text-muted: #8a9bb8;
+  }
+
+  /* Body */
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text-light);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  /* Header */
+  .title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 95%;
+    max-width: 1200px;
+    margin-bottom: 20px;
+  }
+
+  .title img {
+    border-radius: 12%;
+    width: 70px;
+    height: 70px;
+  }
+
+  .title h1 {
+    text-align: center;
+    color: var(--accent);
+    margin: 0;
+    font-size: 22px;
+  }
+
+  .title small {
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* Container */
+  .admin-container {
+    width: 95%;
+    max-width: 1200px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  /* Titres */
+  h1,
+  h2 {
+    color: var(--accent);
+    text-align: center;
+    margin: 10px 0;
+  }
+
+  h3 {
+    color: var(--text-muted);
+    font-size: 16px;
+    margin: 0 0 10px 0;
+  }
+
+  /* Sections */
+  .buttons,
+  .chrono-controls,
+  .gestion-match,
+  .gestion-info,
+  .sect-2 {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+  }
+
+  .buttons>div,
+  .sect-2>div {
+    background: #1a2133;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 15px;
+    min-width: 250px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  /* Boutons */
+  button {
+    background: var(--primary);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-weight: 600;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  button:hover {
+    background: var(--primary-light);
+  }
+
+  button:active {
+    transform: scale(0.96);
+  }
+
+  button.danger {
+    background: var(--danger);
+  }
+
+  button.success {
+    background: var(--success);
+  }
+
+  /* Selects & Inputs */
+  select,
+  input[type="text"],
+  textarea {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 14px;
+    outline: none;
+    background: #0f1525;
+    color: var(--text-light);
+    width: 100%;
+    max-width: 200px;
+  }
+
+  textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+
+  /* Affichage score */
+  .show p {
+    font-size: 28px;
+    font-weight: bold;
+    margin: 0;
+    color: var(--accent);
+  }
+
+  /* Homme du match */
+  .man-of-the-match {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(0, 212, 255, 0.1);
+    border-left: 5px solid var(--accent);
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 500;
+    color: var(--accent);
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+    margin-top: 20px;
+  }
+
+  /* Responsive */
+  @media(max-width: 900px) {
+
+    .buttons,
+    .sect-2 {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<body>
+  <!-- blobs décoratifs -->
+  <div class="liquid-blob blob1" aria-hidden="true"></div>
+  <div class="liquid-blob blob2" aria-hidden="true"></div>
+
+  <div class="title">
+    <img src="images/Image1.jpg" />
+    <div>
+      <h1>Groupe Scolaire David Diop Mendes</h1>
+      <small>Défi du Génie en Herbe (11ᵉ Édition)</small>
+    </div>
+    <img src="images/image2.jpg" />
+  </div>
+
+  <div class="admin-container">
+    <h1>Panel Admin</h1>
+
+    <div class="buttons">
+      <!-- Équipe A -->
+      <div>
+        <h3>Équipe A</h3>
+        <select id="selectA">
+          <option value="EQUIPE A" selected>EQUIPE A</option>
+          <option value="6ème A">6ème A</option>
+          <option value="6ème B">6ème B</option>
+          <option value="6ème C">6ème C</option>
+          <option value="6ème D">6ème D</option>
+          <option value="6ème E">6ème E</option>
+          <hr>
+          <option value="5ème A">5ème A</option>
+          <option value="5ème B">5ème B</option>
+          <option value="5ème C">5ème C</option>
+          <option value="5ème D">5ème D</option>
+          <option value="5ème E">5ème E</option>
+          <hr>
+          <option value="4ème A">4ème A</option>
+          <option value="4ème B">4ème B</option>
+          <option value="4ème C">4ème C</option>
+          <option value="4ème D">4ème D</option>
+          <option value="4ème E">4ème E</option>
+          <hr>
+          <option value="3ème A">3ème A</option>
+          <option value="3ème B">3ème B</option>
+          <option value="3ème C">3ème C</option>
+          <option value="3ème D">3ème D</option>
+        </select>
+        <div>
+          <button onclick="updateScore('A',10)">+10</button>
+          <button onclick="updateScore('A',20)">+20</button>
+          <button onclick="updateScore('A',30)">+30</button>
+          <button onclick="updateScore('A',-10)">-10</button>
+        </div>
+        <div class="show">
+          <p id="scoreA">0</p><span>POINTS</span>
+        </div>
+      </div>
+
+      <!-- Équipe B -->
+      <div>
+        <h3>Équipe B</h3>
+        <select id="selectB">
+          <option value="EQUIPE B" selected>EQUIPE B</option>
+          <option value="6ème A">6ème A</option>
+          <option value="6ème B">6ème B</option>
+          <option value="6ème C">6ème C</option>
+          <option value="6ème D">6ème D</option>
+          <option value="6ème E">6ème E</option>
+          <hr>
+          <option value="5ème A">5ème A</option>
+          <option value="5ème B">5ème B</option>
+          <option value="5ème C">5ème C</option>
+          <option value="5ème D">5ème D</option>
+          <option value="5ème E">5ème E</option>
+          <hr>
+          <option value="4ème A">4ème A</option>
+          <option value="4ème B">4ème B</option>
+          <option value="4ème C">4ème C</option>
+          <option value="4ème D">4ème D</option>
+          <option value="4ème E">4ème E</option>
+          <hr>
+          <option value="3ème A">3ème A</option>
+          <option value="3ème B">3ème B</option>
+          <option value="3ème C">3ème C</option>
+          <option value="3ème D">3ème D</option>
+        </select>
+        <div>
+          <button onclick="updateScore('B',10)">+10</button>
+          <button onclick="updateScore('B',20)">+20</button>
+          <button onclick="updateScore('B',30)">+30</button>
+          <button onclick="updateScore('B',-10)">-10</button>
+        </div>
+        <div class="show">
+          <p id="scoreB">0</p><span>POINTS</span>
+        </div>
+      </div>
+    </div>
+
+    <h2>Gestion Match & Infos</h2>
+    <div class="gestion-match">
+      <button id="save-score" type="button">Enregistrer le score</button>
+      <button id="next-match-button">Prochain match</button>
+      <button id="shift-result">Afficher la page résultat</button>
+      <button id="shift-display">Afficher la page score</button>
+
+      <script src="/socket.io/socket.io.js"></script>
+      <script>
+        document.getElementById("shift-result").addEventListener("click", () => {
+          socket.emit("changePublicPage", "result");
+        });
+
+        document.getElementById("shift-display").addEventListener("click", () => {
+          socket.emit("changePublicPage", "display");
+        });
+        // Prochain Match
+        document.getElementById("next-match-button")
+          .addEventListener("click", () => {
+            socket.emit("nextMatch");
+          });
+      </script>
+
+    </div>
+
+    <div class="gestion-info">
+      <textarea id="info" placeholder="Message / informations"></textarea>
+      <button type="button" id="info-submit"><i class="fa-solid fa-paper-plane"></i> ENVOYER</button>
+    </div>
+    <div class="sect-2">
+      <!-- Homme du match -->
+      <div class="homme-du-match">
+        <h2>Homme du Match</h2>
+        <input type="text" id="hommeNom" placeholder="Nom du joueur" />
+        <select id="hommeEquipe">
+          <option value="" selected>CLASSE</option>
+          <option value="6ème A">6ème A</option>
+          <option value="6ème B">6ème B</option>
+          <option value="6ème C">6ème C</option>
+          <option value="6ème D">6ème D</option>
+          <option value="6ème E">6ème E</option>
+          <hr>
+          <option value="5ème A">5ème A</option>
+          <option value="5ème B">5ème B</option>
+          <option value="5ème C">5ème C</option>
+          <option value="5ème D">5ème D</option>
+          <option value="5ème E">5ème E</option>
+          <hr>
+          <option value="4ème A">4ème A</option>
+          <option value="4ème B">4ème B</option>
+          <option value="4ème C">4ème C</option>
+          <option value="4ème D">4ème D</option>
+          <option value="4ème E">4ème E</option>
+          <hr>
+          <option value="3ème A">3ème A</option>
+          <option value="3ème B">3ème B</option>
+          <option value="3ème C">3ème C</option>
+          <option value="3ème D">3ème D</option>
+        </select>
+        <button onclick="elireHomme()">Élire</button>
+      </div>
+
+      <!-- Programmer un match -->
+      <div class="programmation">
+        <h2>Programmer un Match</h2>
+        <label>Équipe A :</label>
+        <select id="nextTeamA">
+          <option value="" selected>EQUIPE A</option>
+          <option value="6ème A">6ème A</option>
+          <option value="6ème B">6ème B</option>
+          <option value="6ème C">6ème C</option>
+          <option value="6ème D">6ème D</option>
+          <option value="6ème E">6ème E</option>
+          <hr>
+          <option value="5ème A">5ème A</option>
+          <option value="5ème B">5ème B</option>
+          <option value="5ème C">5ème C</option>
+          <option value="5ème D">5ème D</option>
+          <option value="5ème E">5ème E</option>
+          <hr>
+          <option value="4ème A">4ème A</option>
+          <option value="4ème B">4ème B</option>
+          <option value="4ème C">4ème C</option>
+          <option value="4ème D">4ème D</option>
+          <option value="4ème E">4ème E</option>
+          <hr>
+          <option value="3ème A">3ème A</option>
+          <option value="3ème B">3ème B</option>
+          <option value="3ème C">3ème C</option>
+          <option value="3ème D">3ème D</option>
+        </select>
+        <label>Équipe B :</label>
+        <select id="nextTeamB">
+          <option value="" selected>EQUIPE B</option>
+          <option value="6ème A">6ème A</option>
+          <option value="6ème B">6ème B</option>
+          <option value="6ème C">6ème C</option>
+          <option value="6ème D">6ème D</option>
+          <option value="6ème E">6ème E</option>
+          <hr>
+          <option value="5ème A">5ème A</option>
+          <option value="5ème B">5ème B</option>
+          <option value="5ème C">5ème C</option>
+          <option value="5ème D">5ème D</option>
+          <option value="5ème E">5ème E</option>
+          <hr>
+          <option value="4ème A">4ème A</option>
+          <option value="4ème B">4ème B</option>
+          <option value="4ème C">4ème C</option>
+          <option value="4ème D">4ème D</option>
+          <option value="4ème E">4ème E</option>
+          <hr>
+          <option value="3ème A">3ème A</option>
+          <option value="3ème B">3ème B</option>
+          <option value="3ème C">3ème C</option>
+          <option value="3ème D">3ème D</option>
+        </select>
+        <button onclick="programmerMatch()">Programmer</button>
+      </div>
+    </div>
+    <h2>Gestion Arrêt sur Image & Mots croisés</h2>
+    <div class="d-flex">
+      <button onclick="nextLevel()">Niveau suivant</button>
+      <button onclick="resetGame()">Réinitialiser</button>
+      <input type="file" id="imageInput">
+    </div>
+
+  </div>
+
+  <footer>
+    GSDDM LiveScore | Défi du Génie en Herbe (11ᵉ Édition) | 2025 - 2026 | V 2024.1.7 <br>
+    <div class="documents d-flex space-between"><a href="documents/GSDDM-LiveScore-Documentation.pdf" target="_blank"
+        style="color: #8a9bb8;">Documentation</a> | <a href="documents/Licence MIT.pdf" target="_blank"
+        style="color: #8a9bb8;">Licence</a></div>
+  </footer>
+
+  <script>
+    function updateScore(team, value) {
+      console.log(`Envoyer score ${team} += ${value}`);
+      socket.emit('updateScore', { team, value });
+    }
+  </script>
+  <script>
+    const socket = io();
+
+    function nextLevel() {
+      socket.emit("next-level");
+    }
+
+    function resetGame() {
+      socket.emit("reset-image");
+    }
+
+    document.getElementById("imageInput").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        socket.emit("change-image", reader.result);
+      };
+      reader.readAsDataURL(file);
+    });
+  </script>
+  <script>
+    // Équipe A
+    document.getElementById('selectA').addEventListener('change', (e) => {
+      const name = e.target.value;
+      socket.emit('updateTeamName', { team: 'A', name });
+    });
+
+    // Équipe B
+    document.getElementById('selectB').addEventListener('change', (e) => {
+      const name = e.target.value;
+      socket.emit('updateTeamName', { team: 'B', name });
+    });
+  </script>
+  <script>
+    // Informations / Message
+    document.getElementById("info-submit").addEventListener("click", () => {
+      const msg = document.getElementById("info").value;
+      console.log("Envoi du message:", msg);
+      socket.emit("adminMessage", msg);
+    });
+  </script>
+  <script>
+    function elireHomme() {
+      const nom = document.getElementById("hommeNom").value.trim();
+      const equipe = document.getElementById("hommeEquipe").value;
+
+      if (!nom) {
+        alert("Veuillez saisir le nom du joueur.");
+        return;
+      }
+
+      if (!equipe) {
+        alert("Veuillez sélectionner la classe du joueur.");
+        return;
+      }
+
+      // Envoyer via socket.io
+      socket.emit("manOfMatch", { nom, equipe });
+
+      // Actions facultatives: vider le champ ou afficher un message
+      document.getElementById("hommeNom").value = "";
+      document.getElementById("hommeEquipe").value = "";
+    }
+
+  </script>
+  <script>
+    let scheduledMatches = []; // tableau pour suivre les matchs programmés côté admin
+
+    function programmerMatch() {
+      const teamA = document.getElementById("nextTeamA").value;
+      const teamB = document.getElementById("nextTeamB").value;
+
+      if (!teamA || !teamB) {
+        alert("Veuillez sélectionner les deux équipes !");
+        return;
+      }
+
+      // Vérifier que l'une des équipes n'est pas déjà programmée
+      const duplicate = scheduledMatches.some(
+        (match) => match.teamA === teamA || match.teamB === teamB
+      );
+
+      if (duplicate) {
+        alert("Une de ces équipes est déjà programmée !");
+        return;
+      }
+
+      const newMatch = { teamA, teamB };
+      scheduledMatches.push(newMatch);
+
+      // Envoyer au serveur pour mise à jour globale
+      socket.emit("scheduleMatch", newMatch);
+
+      // Réinitialiser les sélections
+      document.getElementById("nextTeamA").value = "";
+      document.getElementById("nextTeamB").value = "";
+    }
+
+    // Supprimer un match côté admin
+    function supprimerMatch(index) {
+      scheduledMatches.splice(index, 1);
+      socket.emit("deleteMatch", index);
+    }
+  </script>
+  <script>
+    document.getElementById('save-score').addEventListener('click', () => {
+      const teamA = document.getElementById('selectA').value;
+      const teamB = document.getElementById('selectB').value;
+      const aScore = parseInt(document.getElementById('scoreA').textContent) || 0;
+      const bScore = parseInt(document.getElementById('scoreB').textContent) || 0;
+
+      if (!teamA || !teamB) {
+        alert("Sélectionnez les deux équipes !");
+        return;
+      }
+
+      console.log("Admin envoie score :", { teamA, teamB, aScore, bScore });
+      socket.emit('saveScore', { teamA, teamB, aScore, bScore });
+    });
+  </script>
+</body>
+
+</html>

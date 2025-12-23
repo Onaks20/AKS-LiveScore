@@ -1,0 +1,68 @@
+──────────────────────────────────────────────
+  GSDDM LiveScore – Licence d’utilisation interne
+──────────────────────────────────────────────
+
+- Projet : GSDDM LiveScore  
+- Version : v2024.2.7 (Stable)  
+- Auteurs principaux : Abdou Karim Soumaré & Ablaye Dia  
+- Contact : abdoukarimsoumare97@gmail.com  
+- Copyright (c) 2024  
+  Abdou Karim Soumaré & Ablaye Dia  
+  Groupe Scolaire David Diop Mendes (GSDDM)
+
+──────────────────────────────────────────────
+  LICENCE D’UTILISATION INTERNE – GSDDM
+──────────────────────────────────────────────
+
+### 1. Usage autorisé
+Ce logiciel est strictement réservé à un usage **interne** au **Groupe Scolaire David Diop Mendes (GSDDM)**.  
+Il peut être utilisé, copié, modifié et redistribué **uniquement au sein de l’établissement**,  
+par les élèves, enseignants et équipes techniques autorisées, génération après génération.
+
+---
+
+### 2. Restrictions
+Toute utilisation, diffusion, publication, vente ou partage de ce logiciel **en dehors du GSDDM**  
+est **formellement interdite**, sauf **autorisation écrite explicite** des auteurs principaux.  
+
+Le code source, les fichiers associés et les éléments visuels du projet ne peuvent pas être :
+- publiés sur d’autres plateformes,
+- intégrés à d’autres projets externes,
+- utilisés à des fins commerciales ou promotionnelles.
+
+---
+
+### 3. Inclusion du copyright
+Toute copie, partielle ou totale, du logiciel doit inclure :
+- la mention complète du copyright ci-dessus ;
+- une copie intégrale de cette licence.
+
+---
+
+### 4. Aucune garantie
+LE LOGICIEL EST FOURNI « TEL QUEL »,  
+SANS AUCUNE GARANTIE, EXPRESSE OU IMPLICITE,  
+Y COMPRIS MAIS SANS S’Y LIMITER AUX GARANTIES DE QUALITÉ MARCHANDE,  
+D’ADÉQUATION À UN USAGE PARTICULIER ET D’ABSENCE DE CONTREFAÇON.
+
+---
+
+### 5. Responsabilité
+EN AUCUN CAS, LES AUTEURS OU LE GROUPE SCOLAIRE NE POURRONT ÊTRE TENUS RESPONSABLES  
+DE TOUT DOMMAGE, PERTE DE DONNÉES OU INCIDENT RÉSULTANT DE L’UTILISATION DU LOGICIEL,  
+MÊME DANS LE CADRE SCOLAIRE.
+
+---
+
+### 6. Transmission générationnelle
+Le projet **GSDDM LiveScore** est conçu pour être transmis **de génération en génération**  
+au sein du Groupe Scolaire David Diop Mendes.  
+Chaque promotion est responsable de :
+- sa maintenance,
+- son amélioration,
+- et du respect de cette licence.
+
+──────────────────────────────────────────────
+✨ GSDDM LiveScore – Un héritage scolaire et numérique ✨
+──────────────────────────────────────────────
+© 2024 Abdou Karim Soumaré & Ablaye Dia | Tous droits réservés

@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="./js/display.js"></script>
+    <script>
+        // Informations / Message
+        document.getElementById("info-submit").addEventListener("click", () => {
+            const msg = document.getElementById("info").value;
+            console.log("Envoi du message:", msg);
+            socket.emit("adminMessage", msg);
+        });
+    </script>
+    <title>Scores — Concours Génie en Herbe</title>
+    <style>
+        :root {
+            --primary: #012970;
+            --glass-bg: rgba(255, 255, 255, 0.06);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --accent: #00d4ff;
+            --muted: rgba(255, 255, 255, 0.7);
+            --card-radius: 18px;
+            --glass-blur: 10px;
+            --glass-padding: 18px;
+            font-family: Inter, 'Segoe UI', Roboto, system-ui, -apple-system, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100%;
+            background: linear-gradient(180deg, #0b2350 0%, #001733 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            color: var(--muted);
+            overflow: hidden;
+        }
+
+        .stage {
+            width: 1100px;
+            max-width: 96vw;
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 26px;
+            align-items: start;
+            z-index: 2;
+        }
+
+        header.app-header {
+            grid-column: 1/-1;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .title {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .logo {
+            width: 70px;
+            height: 70px;
+            border-radius: 14px;
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+            color: white;
+            background: linear-gradient(180deg, var(--primary), #003a8c);
+            font-size: 18px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 20px;
+            color: #eaf3ff;
+        }
+
+        p.lead {
+            margin: 0;
+            color: rgba(234, 243, 255, 0.8);
+            font-size: 13px;
+        }
+
+        .glass {
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(var(--glass-blur)) saturate(120%);
+            border-radius: var(--card-radius);
+            padding: var(--glass-padding);
+        }
+
+        .matches {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .match-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 14px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0.01));
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .match-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        }
+
+        .teams {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .team {
+            min-width: 180px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.02);
+            padding: 8px 10px;
+            border-radius: 12px;
+        }
+
+        .badge {
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: grid;
+            place-items: center;
+            font-weight: 700;
+            color: white;
+            background: linear-gradient(180deg, var(--primary), #003a8c);
+        }
+
+        .team-name {
+            font-weight: 600;
+            color: #e8f4ff;
+            font-size: 14px;
+        }
+
+        .meta {
+            font-size: 12px;
+            color: rgba(234, 243, 255, 0.7);
+        }
+
+        .score {
+            min-width: 110px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: flex-end;
+            font-size: 16px;
+        }
+
+        .score .num {
+            font-weight: 800;
+            font-size: 28px;
+            color: var(--primary);
+            background: linear-gradient(180deg, #fff, #f1f7ff);
+            padding: 6px 12px;
+            border-radius: 10px;
+            min-width: 38px;
+            text-align: center;
+        }
+
+        .panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .panel .stat {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            border-radius: 12px;
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.015), rgba(255, 255, 255, 0.01));
+        }
+
+        .stat h3 {
+            margin: 0;
+            font-size: 13px;
+            color: #eaf3ff;
+        }
+
+        .stat p {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .next-matches {
+            margin-top: 14px;
+        }
+
+        .next-matches h3 {
+            margin: 0 0 8px;
+            font-size: 14px;
+            color: #eaf3ff;
+        }
+
+        .next-matches ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .next-matches li {
+            font-size: 13px;
+            color: #cde7ff;
+            background: rgba(255, 255, 255, 0.06);
+            padding: 8px 12px;
+            border-radius: 10px;
+            transition: background 0.2s ease;
+        }
+
+        .next-matches li:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        footer {
+            text-align: center;
+            color: #fff;
+            font-size: 16px;
+            font-weight: 600;
+            padding: 16px;
+            margin: 0;
+            background: rgba(1, 41, 112, 0.8);
+            backdrop-filter: blur(8px);
+            border-top: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+            letter-spacing: 1px;
+        }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 1024px) {
+            .stage {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+
+            .panel {
+                flex-direction: row;
+                flex-wrap: wrap;
+                justify-content: space-between;
+            }
+
+            .panel .stat {
+                flex: 1 1 45%;
+                margin-bottom: 12px;
+            }
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 20px;
+            }
+
+            .stage {
+                width: 100%;
+                grid-template-columns: 1fr;
+                gap: 14px;
+            }
+
+            .panel {
+                flex-direction: column;
+            }
+
+            .panel .stat {
+                flex: unset;
+            }
+
+            .matches .match-card {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .teams {
+                flex-direction: column;
+                gap: 8px;
+            }
+
+            .score {
+                justify-content: flex-start;
+                gap: 6px;
+                margin-top: 6px;
+            }
+
+            .score .num {
+                font-size: 22px;
+                padding: 4px 10px;
+            }
+
+            .badge {
+                width: 40px;
+                height: 40px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <main class="stage">
+        <header class="app-header">
+            <div class="title">
+                <div class="logo">GSDDM</div>
+                <div>
+                    <h1>Concours — Génie en Herbe</h1>
+                    <p class="lead">Tableau des scores (Public)</p>
+                </div>
+            </div>
+        </header>
+        <!-- Afficher les matchs enregistrés -->
+        <section class="glass matches" id="matchesList"></section>
+
+        <aside class="glass panel">
+            <div class="titre-name">
+                <img src="./images/Image1.jpg" alt="Logo1">
+                <h1>Groupe Scolaire David Diop Mendes</h1>
+                <img src="./images/image2.jpg" alt="Logo2">
+            </div>
+            <style>
+                .titre-name {
+                    display: flex;
+                    justify-content: space-around;
+                    align-items: center;
+                    padding: 12px;
+                    backdrop-filter: blur(20px);
+                    background: rgba(255, 255, 255, 0.1);
+                    border-radius: 16px;
+                    margin: 20px;
+                    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                }
+
+                .titre-name h1 {
+                    font-size: 12px;
+                    font-weight: bold;
+                    text-align: center;
+                    color: #fff;
+                    text-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+                }
+
+                .titre-name img {
+                    border-radius: 12%;
+                    width: 10%;
+                    height: auto;
+                    padding: 12px;
+                    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+                }
+            </style>
+            <div class="stat">
+                <h3>Nombre de Matchs</h3>
+                <p id="totalMatches">0</p>
+            </div>
+            <div class="stat">
+                <h3>Équipe leader</h3>
+                <p id="leaderName">—</p>
+            </div>
+            <div class="stat">
+                <h3>Étoile du match</h3>
+                <p id="manOfMatch">—</p>
+            </div>
+
+            <div class="stat">
+                <div class="next-matches">
+                    <h3>Prochains matchs</h3>
+                    <div id="current-match-display"></div>
+                    <br>
+                    <ul id="nextMatches"></ul>
+                </div>
+            </div>
+            <!-- Section pour message/information -->
+            <div class="info-section">
+                <marquee behavior="scroll" direction="left"><span id="section-info">En attente
+                        d'information...</span></marquee>
+            </div>
+
+        </aside>
+        <footer>
+            GSDDM LiveScore | Défi du Génie en Herbe (11ᵉ Édition) | 2025 - 2026 | V 2024.1.7 <br>
+            <div class="documents d-flex space-between"><a href="documents/GSDDM-LiveScore-Documentation.pdf"
+                    target="_blank" style="color: #8a9bb8;">Documentation</a> | <a href="documents/Licence MIT.pdf"
+                    target="_blank" style="color: #8a9bb8;">Licence</a></div>
+        </footer>
+    </main>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        (function () {
+            const socket = io();
+
+            const matchesList = document.getElementById('matchesList');
+            const totalMatches = document.getElementById('totalMatches');
+            const leaderName = document.getElementById('leaderName');
+            const manOfMatch = document.getElementById('manOfMatch');
+            const nextMatches = document.getElementById('nextMatches');
+
+            let matches = [];   // matchs joués (avec scores)
+            let upcoming = [];  // matchs programmés
+            const prevScores = new Map(); // pour animer changements
+
+            // util
+            function abbr(name) {
+                if (!name) return '—';
+                return String(name).split(' ').map(w => w[0] || '').slice(0, 2).join('').toUpperCase();
+            }
+            function matchKey(m) {
+                // si le serveur fournit un id utilisez-le; sinon compose un key stable
+                if (m.id) return String(m.id);
+                return `${m.teamA || ''}__${m.teamB || ''}`;
+            }
+
+            // création propre des éléments DOM
+            function createMatchCard(m) {
+                const key = matchKey(m);
+                const prev = prevScores.get(key) || { a: null, b: null };
+
+                const card = document.createElement('div');
+                card.className = 'match-card';
+
+                const teamsDiv = document.createElement('div');
+                teamsDiv.className = 'teams';
+
+                const makeTeam = (name, round) => {
+                    const t = document.createElement('div');
+                    t.className = 'team';
+
+                    const b = document.createElement('div');
+                    b.className = 'badge';
+                    b.textContent = abbr(name);
+
+                    const info = document.createElement('div');
+                    info.className = 'team-info';
+
+                    const nm = document.createElement('div');
+                    nm.className = 'team-name';
+                    nm.textContent = name || '—';
+
+                    info.appendChild(nm);
+                    if (round) {
+                        const meta = document.createElement('div');
+                        meta.className = 'meta';
+                        meta.textContent = round;
+                        info.appendChild(meta);
+                    }
+
+                    t.appendChild(b);
+                    t.appendChild(info);
+                    return t;
+                };
+
+                const left = makeTeam(m.teamA, m.round || '');
+                const right = makeTeam(m.teamB, '');
+
+                teamsDiv.appendChild(left);
+                teamsDiv.appendChild(right);
+
+                const scoreDiv = document.createElement('div');
+                scoreDiv.className = 'score';
+
+                const numA = document.createElement('div');
+                numA.className = 'num';
+                numA.textContent = String(m.aScore ?? 0);
+
+                const vs = document.createElement('div');
+                vs.className = 'vs';
+                vs.textContent = '—';
+
+                const numB = document.createElement('div');
+                numB.className = 'num';
+                numB.textContent = String(m.bScore ?? 0);
+
+                // animation si valeur change
+                if (prev.a !== null && Number(prev.a) !== Number(m.aScore)) {
+                    numA.classList.add('pulse');
+                }
+                if (prev.b !== null && Number(prev.b) !== Number(m.bScore)) {
+                    numB.classList.add('pulse');
+                }
+
+                // update prevScores map now
+                prevScores.set(key, { a: Number(m.aScore ?? 0), b: Number(m.bScore ?? 0) });
+
+                scoreDiv.appendChild(numA);
+                scoreDiv.appendChild(vs);
+                scoreDiv.appendChild(numB);
+
+                card.appendChild(teamsDiv);
+                card.appendChild(scoreDiv);
+
+                return card;
+            }
+
+            // render complet
+            function render() {
+                // clear
+                matchesList.innerHTML = '';
+
+                // insert matches (played)
+                matches.forEach(m => {
+                    const card = createMatchCard(m);
+                    matchesList.appendChild(card);
+                });
+
+                // totals: affichage total (joués + programmés) pour info publique
+                totalMatches.textContent = (matches.length + upcoming.length);
+
+                // leader & man of match
+                computeLeader();
+                renderUpcoming();
+            }
+            // Equipe leader
+            function computeLeader() {
+                const totals = {};
+                matches.forEach(m => {
+                    if (m.teamA) totals[m.teamA] = (totals[m.teamA] || 0) + Number(m.aScore || 0);
+                    if (m.teamB) totals[m.teamB] = (totals[m.teamB] || 0) + Number(m.bScore || 0);
+                });
+                let leader = null, best = -1;
+                for (const t in totals) { if (totals[t] > best) { best = totals[t]; leader = t; } }
+                leaderName.textContent = leader ? `${leader} — ${best} pts` : '—';
+            }
+
+            function renderUpcoming() {
+                nextMatches.innerHTML = '';
+                upcoming.forEach(m => {
+                    const li = document.createElement('li');
+                    li.textContent = `${m.teamA || '—'} vs ${m.teamB || '—'}${m.round ? ` — ${m.round}` : ''}`;
+                    nextMatches.appendChild(li);
+                });
+            }
+
+            /* ---------------- SOCKET LISTENERS centralisés ---------------- */
+
+            socket.on('connect', () => console.log('Display connecté au serveur'));
+
+            socket.on('updateScores', data => {
+                try {
+                    if (!data) return;
+                    if (Array.isArray(data.matches)) matches = data.matches;
+                    if (Array.isArray(data.upcoming)) upcoming = data.upcoming;
+                    render();
+                } catch (e) { console.error('updateScores error', e); }
+            });
+
+            // format: array of played matches (simple)
+            socket.on('updateMatches', list => {
+                if (!Array.isArray(list)) return;
+                matches = list;
+                render();
+            });
+
+            // scheduled matches only (upcoming)
+            socket.on('updateScheduledMatches', list => {
+                if (!Array.isArray(list)) return;
+                upcoming = list;
+                // update totals display, upcoming list
+                renderUpcoming();
+                totalMatches.textContent = (matches.length + upcoming.length);
+            });
+
+            // homme du match (admin elect)
+            socket.on('updateManOfMatch', payload => {
+                if (!payload) return;
+                // payload may be {nom, equipe} or a string
+                if (typeof payload === 'string') manOfMatch.textContent = payload;
+                else manOfMatch.textContent = `${payload.nom || payload.name || '—'}${payload.equipe ? ' (' + payload.equipe + ')' : ''}`;
+            });
+
+            // fallback
+            socket.on('init', data => {
+                if (!data) return;
+                if (Array.isArray(data.matches)) matches = data.matches;
+                if (Array.isArray(data.upcoming)) upcoming = data.upcoming;
+                render();
+            });
+
+            // Current match 
+
+            const nextMatchesEl = document.getElementById("nextMatches");
+            const currentMatchEl = document.getElementById("current-match-display");
+
+            socket.on("updateScheduledMatches", (matches) => {
+                nextMatchesEl.innerHTML = "";
+                matches.forEach((m) => {
+                    const li = document.createElement("li");
+                    li.textContent = `${m.teamA} vs ${m.teamB}`;
+                    nextMatchesEl.appendChild(li);
+                });
+            });
+
+            socket.on("currentMatch", (match) => {
+                currentMatchEl.textContent = `🔴 Match en cours : ${match.teamA} vs ${match.teamB}`;
+            });
+
+            socket.on("noMatchAvailable", (msg) => {
+                alert(msg);
+            });
+            // sécurité : enregistrer les charges utiles inattendues pour le débogage
+            const debugEvents = ['debug'];
+            debugEvents.forEach(evt => socket.on(evt, d => console.log(evt, d)));
+
+            // exposer pour le débogage dans la console
+            window.__scoreApp = { matchesList, matches, upcoming, render };
+        })();
+    </script>
+</body>
+
+</html>

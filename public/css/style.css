@@ -1,0 +1,99 @@
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background: #012970;
+  color: white;
+  text-align: center;
+}
+
+.container, .admin-container, .results-container {
+  padding: 20px;
+}
+
+.teams {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  margin-top: 50px;
+  flex-wrap: wrap;
+}
+
+.team, #chrono, marquee {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  min-width: 180px;
+  margin: 20px;
+}
+
+.team h2 {
+  margin: 0 0 10px 0;
+}
+
+.team p, .chrono {
+  font-size: 3rem;
+  margin: 0;
+}
+
+.chrono {
+  font-weight: bold;
+  font-size: 3.5rem;
+}
+
+button, .show p {
+  margin: 5px;
+  padding: 10px 20px;
+  background: #00B0F0;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-size: 16px;
+  transition: background 0.3s ease;
+}
+button{
+  cursor: pointer;
+}
+
+button:hover {
+  background: #007bbf;
+}
+
+.buttons {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  margin-bottom: 30px;
+}
+
+.chrono-controls, .match-controls {
+  margin: 10px 0;
+}
+
+@media (max-width: 600px) {
+  .teams {
+    flex-direction: column;
+  }
+  .buttons {
+    flex-direction: column;
+  }
+  button {
+    width: 80%;
+    margin: 8px auto;
+  }
+}
+/* Chrono */
+#chrono {
+  font-size: 4rem;
+  font-weight: bold;
+  color: red;
+  transition: all 0.3s ease;
+  animation: pulse 1s infinite;
+}
+
+#chrono.low-time {
+  color: orange;
+  animation: blink 1s infinite;
+}
+

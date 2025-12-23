@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Écran Public</title>
+  <style>
+    body, html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      background: #000;
+      overflow: hidden;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      opacity: 1;
+      transition: opacity 0.8s ease; /* transition douce */
+    }
+    iframe.fade-out {
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+  <iframe id="public-frame"></iframe>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+    const frame = document.getElementById("public-frame");
+
+    function loadPage(page) {
+      // fade-out
+      frame.classList.add("fade-out");
+
+      // fade-out
+      setTimeout(() => {
+        // Changer la source de l’iframe
+        frame.src = page + ".html";
+
+        // quand la page est bien chargée passons à: fade-in
+        frame.onload = () => {
+          frame.classList.remove("fade-out");
+        };
+      }, 800); // durée de la transition 
+    }
+
+    socket.on("loadPage", (page) => {
+      loadPage(page);
+    });
+
+    // page par défaut
+    loadPage("display");
+  </script>
+</body>
+</html>
