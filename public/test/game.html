@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin – Arrêt sur image</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+
+<main class="container">
+
+  <!-- Upload image -->
+  <section class="card">
+    <h2>1. Charger l’image</h2>
+    <input type="file" id="imageInput" accept="image/*">
+  </section>
+
+  <!-- Preview -->
+  <section class="card">
+    <h2>2. Aperçu & sélection</h2>
+
+    <div class="image-wrapper">
+      <img id="previewImage" alt="Aperçu">
+      <div id="zonesContainer"></div>
+    </div>
+
+    <p class="hint">
+      Clique sur l’image pour ajouter une zone à révéler
+    </p>
+  </section>
+
+  <!-- Controls -->
+  <section class="card actions">
+    <button id="startGame">▶ Démarrer le jeu</button>
+    <button id="reset">♻ Réinitialiser</button>
+  </section>
+
+</main>
+
+<script src="admin-arret-image.js"></script>
+</body>
+</html>
+<style>
+  .admin-page {
+  background: #0f172a;
+  color: #e5e7eb;
+}
+
+.container {
+  max-width: 1000px;
+  margin: auto;
+  padding: 20px;
+}
+
+.card {
+  background: #020617;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.4);
+}
+
+.image-wrapper {
+  position: relative;
+  max-width: 100%;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.image-wrapper img {
+  width: 100%;
+  display: block;
+}
+
+.zone {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border: 2px dashed #38bdf8;
+  background: rgba(56,189,248,0.15);
+  cursor: move;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+}
+
+button {
+  background: #2563eb;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+.hint {
+  font-size: 0.9em;
+  opacity: 0.8;
+}
+
+</style>
+<script>
+  const imageInput = document.getElementById("imageInput");
+const previewImage = document.getElementById("previewImage");
+const zonesContainer = document.getElementById("zonesContainer");
+const startGameBtn = document.getElementById("startGame");
+const resetBtn = document.getElementById("reset");
+
+let zones = [];
+
+// Charger image
+imageInput.addEventListener("change", e => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    previewImage.src = reader.result;
+    zonesContainer.innerHTML = "";
+    zones = [];
+  };
+  reader.readAsDataURL(file);
+});
+
+// Ajouter une zone au clic
+previewImage.addEventListener("click", e => {
+  const rect = previewImage.getBoundingClientRect();
+
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+
+  const zone = document.createElement("div");
+  zone.className = "zone";
+  zone.style.left = `${x - 25}px`;
+  zone.style.top = `${y - 25}px`;
+
+  zonesContainer.appendChild(zone);
+
+  zones.push({
+    x: x / rect.width,
+    y: y / rect.height,
+    size: 50
+  });
+});
+
+// Démarrer le jeu
+startGameBtn.addEventListener("click", () => {
+  if (!previewImage.src || zones.length === 0) {
+    alert("Charge une image et ajoute au moins une zone");
+    return;
+  }
+
+  const gameData = {
+    image: previewImage.src,
+    zones: zones
+  };
+
+  localStorage.setItem("arretImageGame", JSON.stringify(gameData));
+  alert("Jeu prêt ✔️ Page publique synchronisée");
+});
+
+// Reset
+resetBtn.addEventListener("click", () => {
+  previewImage.src = "";
+  zonesContainer.innerHTML = "";
+  zones = [];
+  localStorage.removeItem("arretImageGame");
+});
+
+</script>

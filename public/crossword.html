@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <title>GSDDM LiveScore | Mots Croisés</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --primary: #012970;
+      --glass: rgba(255, 255, 255, 0.15);
+      --border: rgba(255, 255, 255, 0.25);
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #012970, #024ea2);
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .glass-container {
+      background: var(--glass);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 30px;
+      width: 90%;
+      max-width: 1100px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      text-align: center;
+      opacity: 0.8;
+      margin-bottom: 30px;
+    }
+
+    /* ===== GRID ===== */
+    .grid-wrapper {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 30px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(12, 60px);
+      grid-template-rows: repeat(12, 60px);
+      gap: 8px;
+    }
+
+    .cell {
+      background: rgba(255, 255, 255, 0.18);
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      font-weight: bold;
+      position: relative;
+      animation: fadeIn 0.6s ease forwards;
+    }
+
+    .cell.hidden {
+      background: transparent;
+      border: none;
+    }
+
+    .cell span {
+      position: absolute;
+      top: 6px;
+      left: 8px;
+      font-size: 0.7rem;
+      opacity: 0.7;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    /* ===== CLUES ===== */
+    .clues {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    .clues h2 {
+      margin-bottom: 12px;
+      font-size: 1.6rem;
+    }
+
+    .clues p {
+      margin: 6px 0;
+      opacity: 0.9;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .grid {
+        grid-template-columns: repeat(10, 40px);
+        grid-template-rows: repeat(10, 40px);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="glass-container">
+    <h1>Mot Croisé – Génie en Herbe</h1>
+    <p class="subtitle">Manche en cours • Équipe en jeu</p>
+
+    <div class="grid-wrapper">
+      <div class="grid" id="grid"></div>
+    </div>
+
+    <div class="clues" id="clues">
+      <h2>Indices</h2>
+      <div class="clues-panel">
+        <style>
+          .clues-panel {
+            display: flex;
+            justify-content: space-around;
+            gap: 20px;
+          }
+
+          .clues-section {
+            margin-bottom: 20px;
+          }
+
+          .clues-section h3 {
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+          }
+        </style>
+        <div class="clues-section">
+          <h3>Horizontales</h3>
+          <div id="clues-h"></div>
+        </div>
+
+        <div class="clues-section">
+          <h3>Verticales</h3>
+          <div id="clues-v"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
+<script>
+  const socket = io();
+  const GRID_SIZE = 12;
+  const grid = document.getElementById("grid");
+  const cluesHContainer = document.getElementById("clues-h");
+  const cluesVContainer = document.getElementById("clues-v");
+
+  // Création grille publique
+  let gridCells = Array.from({ length: GRID_SIZE }, () => {
+    return Array.from({ length: GRID_SIZE }, () => {
+      const cell = document.createElement("div");
+      cell.classList.add("cell", "hidden"); // caché par défaut
+      grid.appendChild(cell);
+      return cell;
+    });
+  });
+
+  // Rendu des indices
+  function renderClues(words) {
+    cluesHContainer.innerHTML = "";
+    cluesVContainer.innerHTML = "";
+    words.sort((a, b) => a.number - b.number).forEach(w => {
+      const p = document.createElement("p");
+      p.innerHTML = `<strong>${w.number}.</strong> ${w.clue}`;
+      (w.direction === "h" ? cluesHContainer : cluesVContainer).appendChild(p);
+    });
+  }
+
+  // Mettre à jour la grille côté public
+  function renderGrid(words) {
+    // réinitialiser toutes les cases
+    for (let r = 0; r < GRID_SIZE; r++) {
+      for (let c = 0; c < GRID_SIZE; c++) {
+        const cell = gridCells[r][c];
+        cell.textContent = "";
+        cell.dataset.letter = "";
+        cell.dataset.wordIndex = "";
+        cell.dataset.position = "";
+        cell.classList.add("hidden"); // masquons par défaut
+        cell.classList.remove("black", "revealed");
+        const span = cell.querySelector("span.number");
+        if (span) span.remove();
+      }
+    }
+
+    // afficher uniquement les cases concernées par les mots
+    words.forEach((w, index) => {
+      for (let i = 0; i < w.word.length; i++) {
+        let r = w.row, c = w.col;
+        if (w.direction === "h") c += i; else r += i;
+        const cell = gridCells[r][c];
+        if (w.word[i] === " ") { 
+          cell.classList.add("black"); 
+          cell.classList.remove("hidden"); // la case noire doit être visible
+          continue; 
+        }
+        cell.dataset.letter = w.word[i];
+        cell.dataset.wordIndex = index;
+        cell.dataset.position = i;
+        cell.classList.remove("hidden"); // seulement pour les cases du mot
+
+        if (i === 0) {
+          const num = document.createElement("span");
+          num.className = "number";
+          num.textContent = w.number;
+          cell.appendChild(num);
+        }
+      }
+    });
+  }
+
+  // Réception mise à jour grille (nouveau mot ajouté ou start)
+  socket.on("updateGrid", data => {
+    renderClues(data.words);
+    renderGrid(data.words); // cases visibles uniquement pour les mots
+  });
+
+  socket.on("startGame", data => {
+    renderClues(data.words);
+    renderGrid(data.words);
+  });
+
+  // Révélation progressive d’un mot
+  socket.on("revealWord", index => {
+    for (let r = 0; r < GRID_SIZE; r++) {
+      for (let c = 0; c < GRID_SIZE; c++) {
+        const cell = gridCells[r][c];
+        if (cell.dataset.wordIndex == index && !cell.classList.contains("revealed")) {
+          setTimeout(() => {
+            cell.textContent = cell.dataset.letter;
+            cell.classList.add("revealed");
+          }, cell.dataset.position * 150);
+        }
+      }
+    }
+  });
+
+  // Révélation de tous les mots
+  socket.on("revealAll", () => {
+    for (let r = 0; r < GRID_SIZE; r++) {
+      for (let c = 0; c < GRID_SIZE; c++) {
+        const cell = gridCells[r][c];
+        if (cell.dataset.letter && !cell.classList.contains("revealed")) {
+          setTimeout(() => {
+            cell.textContent = cell.dataset.letter;
+            cell.classList.add("revealed");
+          }, cell.dataset.position * 100);
+        }
+      }
+    }
+  });
+</script>
+</body>
+
+</html>

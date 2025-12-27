@@ -11,6 +11,9 @@ let scores = { A: 0, B: 0 };
 let currentMatch = null;
 let scheduledMatches = [];
 let matches = [];
+let words = [];          // mots ajoutés par l'admin
+let revealedWords = new Set();
+
 
 // ===============================
 // SERVE FICHIERS STATIQUES
@@ -109,21 +112,30 @@ io.on("connection", (socket) => {
       socket.emit("noMatchAvailable", "⚠️ Aucun match programmé.");
     }
   });
-  // Arrêt sur image
-  safeOn(socket, "next-level", () => {
-    console.log("🖼️ [ARRÊT SUR IMAGE] Niveau suivant");
-    io.emit("next-level");
+  // ===============================
+  // Arret sur image
+  
+  // Envoi initial de la grille (lettres masquées côté public)
+  socket.emit("updateGrid", { words });
+
+  // ----- Admin met à jour la grille -----
+  socket.on("updateGrid", data => {
+    words = data.words;
+    io.emit("updateGrid", { words }); // broadcast à tous les clients
   });
 
-  safeOn(socket, "reset-image", () => {
-    console.log("🔄 [ARRÊT SUR IMAGE] Réinitialisation");
-    io.emit("reset-image");
+  // ----- Révéler un mot spécifique -----
+  socket.on("revealWord", index => {
+    revealedWords.add(index);
+    io.emit("revealWord", index); // tous les clients voient le mot
   });
 
-  safeOn(socket, "change-image", (imageUrl) => {
-    console.log(`🖼️ [ARRÊT SUR IMAGE] Nouvelle image : ${imageUrl}`);
-    io.emit("change-image", imageUrl);
+  // ----- Révéler tous les mots -----
+  socket.on("revealAll", () => {
+    for (let i = 0; i < words.length; i++) revealedWords.add(i);
+    io.emit("revealAll"); // tous les clients voient toute la grille
   });
+  
 
   // --- Déconnexion ---
   socket.on("disconnect", () => {

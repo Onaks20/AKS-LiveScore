@@ -311,6 +311,8 @@
       <button id="next-match-button">Prochain match</button>
       <button id="shift-result">Afficher la page résultat</button>
       <button id="shift-display">Afficher la page score</button>
+      <button id="shift-crossword">Afficher la page Mots Croisés</button>
+      <button id="shift-stop-image">Afficher la page Arrêt sur image</button>
 
       <script src="/socket.io/socket.io.js"></script>
       <script>
@@ -320,6 +322,14 @@
 
         document.getElementById("shift-display").addEventListener("click", () => {
           socket.emit("changePublicPage", "display");
+        });
+
+        document.getElementById("shift-crossword").addEventListener("click", () => {
+          socket.emit("changePublicPage", "crossword");
+        });
+
+        document.getElementById("shift-stop-image").addEventListener("click", () => {
+          socket.emit("changePublicPage", "stop-image");
         });
         // Prochain Match
         document.getElementById("next-match-button")
@@ -426,10 +436,519 @@
       </div>
     </div>
     <h2>Gestion Arrêt sur Image & Mots croisés</h2>
-    <div class="d-flex">
-      <button onclick="nextLevel()">Niveau suivant</button>
-      <button onclick="resetGame()">Réinitialiser</button>
-      <input type="file" id="imageInput">
+    <div class="stop-image-admin">
+      <input type="file" id="imageInput" accept="image/*" />
+
+      <select id="levelSelector">
+        <option value="1">Niveau 1 (40 pts)</option>
+        <option value="2">Niveau 2 (30 pts)</option>
+        <option value="3">Niveau 3 (20 pts)</option>
+        <option value="4">Niveau 4 (10 pts)</option>
+      </select>
+
+      <div id="imageWrapper">
+        <img id="sourceImage" />
+        <div id="gridOverlay"></div>
+      </div>
+      <script>
+        // ===============================
+        // CONFIGURATION
+        // ===============================
+        const GRID_ROWS = 10;
+        const GRID_COLS = 10;
+
+        const imageInput = document.getElementById("imageInput");
+        const sourceImage = document.getElementById("sourceImage");
+        const gridOverlay = document.getElementById("gridOverlay");
+        const levelSelector = document.getElementById("levelSelector");
+
+        // Stockage central
+        const gameData = {
+          image: null,
+          tiles: [] // { id, row, col, level }
+        };
+
+        // ===============================
+        // IMAGE UPLOAD
+        // ===============================
+        imageInput.addEventListener("change", (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          const reader = new FileReader();
+          reader.onload = () => {
+            sourceImage.src = reader.result;
+            gameData.image = reader.result;
+
+            sourceImage.onload = () => {
+              createGrid();
+            };
+          };
+          reader.readAsDataURL(file);
+        });
+
+        // ===============================
+        // CRÉATION DE LA GRILLE
+        // ===============================
+        function createGrid() {
+          gridOverlay.innerHTML = "";
+          gameData.tiles = [];
+
+          gridOverlay.style.display = "grid";
+          gridOverlay.style.gridTemplateRows = `repeat(${GRID_ROWS}, 1fr)`;
+          gridOverlay.style.gridTemplateColumns = `repeat(${GRID_COLS}, 1fr)`;
+
+          let id = 0;
+
+          for (let row = 0; row < GRID_ROWS; row++) {
+            for (let col = 0; col < GRID_COLS; col++) {
+              const tile = document.createElement("div");
+              tile.classList.add("tile");
+              tile.dataset.id = id;
+              tile.dataset.row = row;
+              tile.dataset.col = col;
+              tile.dataset.level = "";
+
+              tile.addEventListener("click", () => selectTile(tile));
+
+              gridOverlay.appendChild(tile);
+
+              gameData.tiles.push({
+                id,
+                row,
+                col,
+                level: null
+              });
+
+              id++;
+            }
+          }
+        }
+
+        // ===============================
+        // SÉLECTION D’UNE CASE
+        // ===============================
+        function selectTile(tileElement) {
+          const level = parseInt(levelSelector.value);
+          const tileId = parseInt(tileElement.dataset.id);
+
+          // Toggle logique
+          if (tileElement.dataset.level == level) {
+            tileElement.dataset.level = "";
+            tileElement.style.backgroundColor = "transparent";
+            updateTileData(tileId, null);
+            return;
+          }
+
+          tileElement.dataset.level = level;
+          tileElement.style.backgroundColor = getLevelColor(level);
+          updateTileData(tileId, level);
+        }
+
+        // ===============================
+        // MISE À JOUR DATA
+        // ===============================
+        function updateTileData(id, level) {
+          const tile = gameData.tiles.find(t => t.id === id);
+          if (tile) {
+            tile.level = level;
+          }
+        }
+
+        // ===============================
+        // COULEURS PAR NIVEAU
+        // ===============================
+        function getLevelColor(level) {
+          switch (level) {
+            case 1: return "rgba(255, 0, 0, 0.4)";
+            case 2: return "rgba(255, 165, 0, 0.4)";
+            case 3: return "rgba(0, 128, 255, 0.4)";
+            case 4: return "rgba(0, 200, 0, 0.4)";
+            default: return "transparent";
+          }
+        }
+
+        // ===============================
+        // EXPORT (POUR SERVER / PUBLIC)
+        // ===============================
+        function getAdminGameState() {
+          return {
+            image: gameData.image,
+            grid: {
+              rows: GRID_ROWS,
+              cols: GRID_COLS
+            },
+            tiles: gameData.tiles.filter(t => t.level !== null)
+          };
+        }
+
+      </script>
+      <style>
+        input[type="file"],
+        select {
+          background: #020617;
+          color: #e5e7eb;
+          border: 1px solid #334155;
+          padding: 10px 12px;
+          border-radius: 6px;
+          margin-bottom: 15px;
+          cursor: pointer;
+        }
+
+        /* ===============================
+   WRAPPER IMAGE
+================================ */
+        #imageWrapper {
+          position: relative;
+          max-width: 900px;
+          margin: auto;
+          border-radius: 12px;
+          overflow: hidden;
+          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Image responsive */
+        #sourceImage {
+          width: 100%;
+          height: auto;
+          display: block;
+          user-select: none;
+          pointer-events: none;
+        }
+
+        /* ===============================
+   GRID OVERLAY
+================================ */
+        #gridOverlay {
+          position: absolute;
+          inset: 0;
+          display: grid;
+        }
+
+        /* ===============================
+            TILE (CARREAU)
+          ================================ */
+        .tile {
+          border: 1px solid rgba(255, 255, 255, 0.15);
+          cursor: pointer;
+          transition: background-color 0.15s ease, box-shadow 0.15s ease;
+        }
+
+        .tile::after {
+          content: attr(data-id);
+          font-size: 10px;
+          color: rgba(255, 255, 255, 0.4);
+          padding: 4px;
+        }
+
+        .tile:hover {
+          box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4);
+        }
+
+        @media (max-width: 768px) {
+          #imageWrapper {
+            max-width: 100%;
+          }
+        }
+      </style>
+    </div>
+    <h2>Gestion Mots Croisés</h2>
+    <div class="mot-croise-admin">
+      <div class="form-container">
+        <input type="text" id="wordInput" placeholder="Mot">
+        <input type="text" id="clueInput" placeholder="Indice">
+        <select id="directionInput">
+          <option value="h">Horizontal</option>
+          <option value="v">Vertical</option>
+        </select>
+        <button id="addWordBtn">Ajouter Mot</button>
+      </div>
+
+      <div class="controls">
+        <button id="revealWordBtn">Révéler Mot Sélectionné</button>
+        <button id="revealAllBtn">Révéler Tous les Mots</button>
+      </div>
+
+      <div class="grid-wrapper">
+        <div class="grid" id="grid"></div>
+      </div>
+
+      <div class="clues" id="clues">
+        <h2>Indices</h2>
+        <div class="clues-panel">
+          <style>
+            .clues-panel {
+              display: flex;
+              justify-content: space-around;
+              gap: 20px;
+            }
+
+            .clues-section {
+              margin-bottom: 20px;
+            }
+
+            .clues-section h3 {
+              margin-bottom: 10px;
+              font-size: 1.2rem;
+            }
+          </style>
+          <div class="clues-section">
+            <h3>Horizontales</h3>
+            <div id="clues-h"></div>
+          </div>
+
+          <div class="clues-section">
+            <h3>Verticales</h3>
+            <div id="clues-v"></div>
+          </div>
+        </div>
+      </div>
+
+
+      <style>
+        .form-container,
+        .grid-wrapper,
+        .controls {
+          margin-top: 20px;
+          width: 100%;
+          max-width: 1100px;
+        }
+
+        input,
+        select,
+        button {
+          padding: 8px 12px;
+          margin: 4px;
+          border-radius: 8px;
+          border: none;
+          font-size: 1rem;
+        }
+
+        button {
+          cursor: pointer;
+          background: var(--primary);
+          color: white;
+        }
+
+        .grid-wrapper {
+          display: flex;
+          justify-content: center;
+          margin-top: 20px;
+        }
+
+        .grid {
+          display: grid;
+          grid-template-columns: repeat(15, 30px);
+          grid-template-rows: repeat(15, 30px);
+          gap: 10px;
+        }
+
+
+        .cell {
+          background: rgba(255, 255, 255, 0.18);
+          border-radius: 10px;
+          border: 1px solid rgba(255, 255, 255, 0.3);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: bold;
+          color: white;
+          position: relative;
+          font-size: 1rem;
+        }
+
+        .cell span {
+          position: absolute;
+          top: 2px;
+          left: 2px;
+          font-size: 0.6rem;
+          opacity: 0.7;
+        }
+
+        .controls button {
+          margin-right: 10px;
+          margin-top: 10px;
+        }
+      </style>
+      </style>
+      <script>
+        // ================= CONFIG =================
+        const GRID_SIZE = 15;
+        const grid = document.getElementById("grid");
+        const cluesH = document.getElementById("clues-h");
+        const cluesV = document.getElementById("clues-v");
+
+        // ================= STATE =================
+        let words = [];
+        let selectedWordIndex = null;
+        let wordCounter = 1;
+
+        // ================= GRID INIT =================
+        let gridCells = Array.from({ length: GRID_SIZE }, (_, r) =>
+          Array.from({ length: GRID_SIZE }, (_, c) => {
+            const cell = document.createElement("div");
+            cell.classList.add("cell");
+            grid.appendChild(cell);
+            return cell;
+          })
+        );
+
+        // ================= UTILS =================
+        function normalizeWord(word) {
+          return word.toUpperCase();
+        }
+
+        // ================= RENDER CLUES =================
+        function renderClues() {
+          cluesH.innerHTML = "";
+          cluesV.innerHTML = "";
+          words
+            .slice()
+            .sort((a, b) => a.number - b.number)
+            .forEach(w => {
+              const p = document.createElement("p");
+              p.innerHTML = `<strong>${w.number}.</strong> ${w.clue}`;
+              (w.direction === "h" ? cluesH : cluesV).appendChild(p);
+            });
+        }
+
+        // ================= CHECK PLACEMENT =================
+        function canPlaceWord(wordObj, row, col) {
+          let crosses = 0;
+          for (let i = 0; i < wordObj.word.length; i++) {
+            let r = row, c = col;
+            if (wordObj.direction === "h") c += i; else r += i;
+            if (r < 0 || c < 0 || r >= GRID_SIZE || c >= GRID_SIZE) return false;
+            const char = wordObj.word[i];
+            const existing = gridCells[r][c].textContent || "";
+            if (char === " ") continue;
+            if (existing !== "" && existing !== char) return false; // pas d'écrasement
+            if (existing === char) crosses++;
+          }
+          // À partir du 2e mot, il doit y avoir au moins un croisement
+          if (words.length > 0 && crosses === 0) return false;
+          return true;
+        }
+
+        // ================= PLACE WORD =================
+        function placeWord(wordObj) {
+          if (words.length === 0) {
+            wordObj.row = Math.floor(GRID_SIZE / 2);
+            wordObj.col = Math.floor((GRID_SIZE - wordObj.word.length) / 2);
+            return true;
+          }
+
+          for (let placed of words) {
+            for (let i = 0; i < placed.word.length; i++) {
+              for (let j = 0; j < wordObj.word.length; j++) {
+                if (placed.word[i] !== wordObj.word[j]) continue;
+                let row, col;
+                if (placed.direction === "h" && wordObj.direction === "v") {
+                  row = placed.row - j;
+                  col = placed.col + i;
+                } else if (placed.direction === "v" && wordObj.direction === "h") {
+                  row = placed.row + i;
+                  col = placed.col - j;
+                } else continue;
+                if (canPlaceWord(wordObj, row, col)) {
+                  wordObj.row = row;
+                  wordObj.col = col;
+                  return true;
+                }
+              }
+            }
+          }
+          return false;
+        }
+
+        // ================= ADD WORD =================
+        document.getElementById("addWordBtn").addEventListener("click", () => {
+          const rawWord = document.getElementById("wordInput").value.trim();
+          const clue = document.getElementById("clueInput").value.trim();
+          const direction = document.getElementById("directionInput").value;
+
+          if (!rawWord || !clue) return alert("Mot et indice requis");
+
+          const wordObj = {
+            word: normalizeWord(rawWord),
+            clue,
+            direction,
+            revealed: false,
+            number: wordCounter++
+          };
+
+          if (placeWord(wordObj)) {
+            words.push(wordObj);
+            renderGrid(true);
+            renderClues(); // 🔥 Mettre à jour les indices immédiatement
+            socket.emit("updateGrid", { words }); // 🔗 Envoi au public
+            document.getElementById("wordInput").value = "";
+            document.getElementById("clueInput").value = "";
+          } else alert("Placement impossible : aucun croisement valide.");
+        });
+
+        // ================= RENDER GRID =================
+        function renderGrid(isAdmin = true) {
+          for (let r = 0; r < GRID_SIZE; r++) {
+            for (let c = 0; c < GRID_SIZE; c++) {
+              const cell = gridCells[r][c];
+              cell.innerHTML = "";
+              cell.textContent = "";
+              cell.className = "cell";
+              cell.dataset.wordIndex = "";
+              cell.dataset.position = "";
+              cell.classList.remove("black");
+            }
+          }
+
+          words.forEach((w, index) => {
+            for (let i = 0; i < w.word.length; i++) {
+              let r = w.row, c = w.col;
+              if (w.direction === "h") c += i; else r += i;
+              const char = w.word[i];
+              const cell = gridCells[r][c];
+              if (char === " ") { cell.classList.add("black"); continue; }
+
+              // ⚡ si déjà une lettre (croisement), on ne l’écrase pas
+              if (!cell.textContent.includes(char)) cell.textContent += char;
+
+              cell.dataset.wordIndex = index;
+              cell.dataset.position = i;
+
+              // Numéro en exposant seulement sur première lettre
+              if (i === 0) {
+                const num = document.createElement("sup");
+                num.className = "number";
+                num.textContent = w.number;
+                cell.appendChild(num);
+              }
+            }
+          });
+        }
+
+        // ================= REVEAL WORD =================
+        document.getElementById("revealWordBtn").addEventListener("click", () => {
+          if (selectedWordIndex === null) return alert("Sélectionnez un mot");
+          words[selectedWordIndex].revealed = true;
+          socket.emit("revealWord", selectedWordIndex); // 🔗 Public
+        });
+
+        // ================= REVEAL ALL =================
+        document.getElementById("revealAllBtn").addEventListener("click", () => {
+          words.forEach(w => w.revealed = true);
+          socket.emit("revealAll"); // 🔗 Public
+        });
+
+        // ================= SELECT WORD =================
+        gridCells.flat().forEach(cell => {
+          cell.addEventListener("click", () => {
+            if (cell.dataset.wordIndex !== "") {
+              selectedWordIndex = parseInt(cell.dataset.wordIndex);
+              alert(`Mot sélectionné : ${words[selectedWordIndex].word}\nIndice : ${words[selectedWordIndex].clue}`);
+            }
+          });
+        });
+      </script>
     </div>
 
   </div>
