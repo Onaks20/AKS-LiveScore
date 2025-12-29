@@ -2,288 +2,270 @@
 <html lang="fr">
 
 <head>
-  <meta charset="UTF-8" />
-  <title>GSDDM LiveScore | Mots Croisés</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-
+  <meta charset="utf-8">
+  <title>Mots Croisés - Public</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
       --primary: #012970;
-      --glass: rgba(255, 255, 255, 0.15);
-      --border: rgba(255, 255, 255, 0.25);
+      --primary-light: #024ea2;
+      --glass-bg: rgba(255, 255, 255, 0.12);
+      --glass-border: rgba(255, 255, 255, 0.2);
+      --text-primary: #ffffff;
+      --text-secondary: rgba(255, 255, 255, 0.9);
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
     }
 
     * {
+      margin: 0;
+      padding: 0;
       box-sizing: border-box;
-      font-family: 'Inter', sans-serif;
     }
 
     body {
-      margin: 0;
-      background: linear-gradient(135deg, #012970, #024ea2);
-      color: white;
       min-height: 100vh;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: var(--text-primary);
+      font-family: 'Inter', sans-serif;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      justify-content: center;
-    }
-
-    .glass-container {
-      background: var(--glass);
-      backdrop-filter: blur(14px);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 30px;
-      width: 90%;
-      max-width: 1100px;
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+      padding: 30px 20px;
+      overflow-x: hidden;
     }
 
     h1 {
-      text-align: center;
-      font-size: 2.5rem;
+      font-size: 2.8rem;
+      font-weight: 700;
       margin-bottom: 10px;
+      text-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     }
 
-    .subtitle {
-      text-align: center;
-      opacity: 0.8;
-      margin-bottom: 30px;
+    #status {
+      font-size: 1.3rem;
+      margin-bottom: 40px;
+      opacity: 0.9;
+      font-weight: 500;
     }
 
-    /* ===== GRID ===== */
-    .grid-wrapper {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 30px;
+    /* === GRILLE EN LIQUID GLASS === */
+    #grid {
+      margin: 30px 0;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(12, 60px);
-      grid-template-rows: repeat(12, 60px);
-      gap: 8px;
+    .crossword-grid {
+      display: inline-grid;
+      gap: 6px;
+      background: var(--glass-bg);
+      padding: 30px;
+      border-radius: 24px;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow);
     }
 
-    .cell {
-      background: rgba(255, 255, 255, 0.18);
-      border-radius: 10px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
+    .crossword-cell {
+      width: 58px;
+      height: 58px;
+      background: rgba(255, 255, 255, 0.22);
+      border-radius: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.4rem;
-      font-weight: bold;
+      font-weight: 700;
+      font-size: 32px;
+      color: white;
       position: relative;
-      animation: fadeIn 0.6s ease forwards;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
     }
 
-    .cell.hidden {
-      background: transparent;
-      border: none;
+    .crossword-cell:not(.blank):hover {
+      background: rgba(255, 255, 255, 0.35);
+      transform: translateY(-3px);
     }
 
-    .cell span {
+    .crossword-cell.blank {
+      background: #000000 !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .number {
       position: absolute;
       top: 6px;
       left: 8px;
-      font-size: 0.7rem;
-      opacity: 0.7;
+      font-size: 12px;
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.8);
+      pointer-events: none;
     }
 
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: scale(0.8);
-      }
-
-      to {
-        opacity: 1;
-        transform: scale(1);
-      }
+    /* === INDICES EN LIQUID GLASS === */
+    #clues {
+      width: 100%;
+      max-width: 1000px;
+      margin-top: 40px;
     }
 
-    /* ===== CLUES ===== */
-    .clues {
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 14px;
-      padding: 20px;
+    .clues-container {
+      display: flex;
+      justify-content: center;
+      gap: 60px;
+      flex-wrap: wrap;
     }
 
-    .clues h2 {
-      margin-bottom: 12px;
+    .clues-section {
+      flex: 1;
+      min-width: 320px;
+      background: var(--glass-bg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 20px;
+      padding: 25px;
+      border: 1px solid var(--glass-border);
+      box-shadow: var(--shadow);
+    }
+
+    .clues-section h3 {
       font-size: 1.6rem;
+      font-weight: 600;
+      color: white;
+      text-align: center;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.3);
     }
 
-    .clues p {
-      margin: 6px 0;
-      opacity: 0.9;
+    .clues-section p {
+      margin: 12px 0;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      padding: 8px 0;
     }
 
-    /* RESPONSIVE */
+    .clues-section strong {
+      color: #a8d0ff;
+      font-weight: 600;
+    }
+
+    /* Responsive */
     @media (max-width: 768px) {
-      .grid {
-        grid-template-columns: repeat(10, 40px);
-        grid-template-rows: repeat(10, 40px);
+      .crossword-cell {
+        width: 45px;
+        height: 45px;
+        font-size: 24px;
+      }
+
+      .number {
+        font-size: 10px;
+        top: 5px;
+        left: 6px;
+      }
+
+      h1 {
+        font-size: 2.2rem;
+      }
+
+      .clues-container {
+        gap: 30px;
+      }
+
+      .clues-section {
+        padding: 20px;
       }
     }
   </style>
 </head>
 
 <body>
-  <div class="glass-container">
-    <h1>Mot Croisé – Génie en Herbe</h1>
-    <p class="subtitle">Manche en cours • Équipe en jeu</p>
+  <h1>Mots Croisés en Direct</h1>
+  <p id="status">En attente de l'administrateur...</p>
 
-    <div class="grid-wrapper">
-      <div class="grid" id="grid"></div>
-    </div>
+  <div id="grid"></div>
+  <div id="clues"></div>
 
-    <div class="clues" id="clues">
-      <h2>Indices</h2>
-      <div class="clues-panel">
-        <style>
-          .clues-panel {
-            display: flex;
-            justify-content: space-around;
-            gap: 20px;
+  <script>
+    const socket = io();
+    const status = document.getElementById("status");
+    socket.on('gridUpdate', (data) => {
+      if (!data || !data.table) {
+        document.getElementById("status").textContent = "En attente de l'administrateur...";
+        document.getElementById("grid").innerHTML = "";
+        document.getElementById("clues").innerHTML = "";
+        return;
+      }
+
+      document.getElementById("status").textContent = "Partie en cours !";
+
+      // === GRILLE ===
+      let html = `<div class="crossword-grid" style="grid-template-columns: repeat(${data.table[0].length}, 1fr);">`;
+      for (let r = 0; r < data.table.length; r++) {
+        for (let c = 0; c < data.table[r].length; c++) {
+          const char = data.table[r][c];
+          const isBlank = char === '-';
+          let display = '';
+
+          // Lettres révélées progressivement
+          if (data.revealedWords) {
+            for (let pos in data.revealedWords) {
+              const entry = data.result.find(e => e.position == pos);
+              if (entry) {
+                const word = data.revealedWords[pos];
+                let wx = entry.startx - 1;
+                let wy = entry.starty - 1;
+                for (let i = 0; i < word.length; i++) {
+                  const cr = entry.orientation === "across" ? wy : wy + i;
+                  const cc = entry.orientation === "across" ? wx + i : wx;
+                  if (cr === r && cc === c) {
+                    display = word[i];
+                  }
+                }
+              }
+            }
           }
 
-          .clues-section {
-            margin-bottom: 20px;
+          let number = '';
+          const entry = data.result.find(e => e.starty - 1 === r && e.startx - 1 === c);
+          if (entry) {
+            number = `<span class="number">${entry.position}</span>`;
           }
 
-          .clues-section h3 {
-            margin-bottom: 10px;
-            font-size: 1.2rem;
-          }
-        </style>
-        <div class="clues-section">
-          <h3>Horizontales</h3>
-          <div id="clues-h"></div>
-        </div>
+          html += `<div class="crossword-cell ${isBlank ? 'blank' : ''}">${number}${display}</div>`;
+        }
+      }
+      html += '</div>';
+      document.getElementById("grid").innerHTML = html;
 
-        <div class="clues-section">
-          <h3>Verticales</h3>
-          <div id="clues-v"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <script src="https://cdn.socket.io/4.6.1/socket.io.min.js"></script>
-<script>
-  const socket = io();
-  const GRID_SIZE = 12;
-  const grid = document.getElementById("grid");
-  const cluesHContainer = document.getElementById("clues-h");
-  const cluesVContainer = document.getElementById("clues-v");
+      // === INDICES ===
+      const h = [], v = [];
+      data.result.forEach(entry => {
+        const clue = data.clues[entry.position] || "Indice manquant";
+        const line = `<p><strong>${entry.position}.</strong> ${clue}</p>`;
+        if (entry.orientation === "across") {
+          h.push(line);
+        } else {
+          v.push(line);
+        }
+      });
 
-  // Création grille publique
-  let gridCells = Array.from({ length: GRID_SIZE }, () => {
-    return Array.from({ length: GRID_SIZE }, () => {
-      const cell = document.createElement("div");
-      cell.classList.add("cell", "hidden"); // caché par défaut
-      grid.appendChild(cell);
-      return cell;
+      document.getElementById("clues").innerHTML = `
+        <div class="clues-container">
+          <div class="clues-section">
+            <h3>Horizontaux</h3>
+            ${h.join('')}
+          </div>
+          <div class="clues-section">
+            <h3>Verticaux</h3>
+            ${v.join('')}
+          </div>
+        </div>`;
     });
-  });
-
-  // Rendu des indices
-  function renderClues(words) {
-    cluesHContainer.innerHTML = "";
-    cluesVContainer.innerHTML = "";
-    words.sort((a, b) => a.number - b.number).forEach(w => {
-      const p = document.createElement("p");
-      p.innerHTML = `<strong>${w.number}.</strong> ${w.clue}`;
-      (w.direction === "h" ? cluesHContainer : cluesVContainer).appendChild(p);
-    });
-  }
-
-  // Mettre à jour la grille côté public
-  function renderGrid(words) {
-    // réinitialiser toutes les cases
-    for (let r = 0; r < GRID_SIZE; r++) {
-      for (let c = 0; c < GRID_SIZE; c++) {
-        const cell = gridCells[r][c];
-        cell.textContent = "";
-        cell.dataset.letter = "";
-        cell.dataset.wordIndex = "";
-        cell.dataset.position = "";
-        cell.classList.add("hidden"); // masquons par défaut
-        cell.classList.remove("black", "revealed");
-        const span = cell.querySelector("span.number");
-        if (span) span.remove();
-      }
-    }
-
-    // afficher uniquement les cases concernées par les mots
-    words.forEach((w, index) => {
-      for (let i = 0; i < w.word.length; i++) {
-        let r = w.row, c = w.col;
-        if (w.direction === "h") c += i; else r += i;
-        const cell = gridCells[r][c];
-        if (w.word[i] === " ") { 
-          cell.classList.add("black"); 
-          cell.classList.remove("hidden"); // la case noire doit être visible
-          continue; 
-        }
-        cell.dataset.letter = w.word[i];
-        cell.dataset.wordIndex = index;
-        cell.dataset.position = i;
-        cell.classList.remove("hidden"); // seulement pour les cases du mot
-
-        if (i === 0) {
-          const num = document.createElement("span");
-          num.className = "number";
-          num.textContent = w.number;
-          cell.appendChild(num);
-        }
-      }
-    });
-  }
-
-  // Réception mise à jour grille (nouveau mot ajouté ou start)
-  socket.on("updateGrid", data => {
-    renderClues(data.words);
-    renderGrid(data.words); // cases visibles uniquement pour les mots
-  });
-
-  socket.on("startGame", data => {
-    renderClues(data.words);
-    renderGrid(data.words);
-  });
-
-  // Révélation progressive d’un mot
-  socket.on("revealWord", index => {
-    for (let r = 0; r < GRID_SIZE; r++) {
-      for (let c = 0; c < GRID_SIZE; c++) {
-        const cell = gridCells[r][c];
-        if (cell.dataset.wordIndex == index && !cell.classList.contains("revealed")) {
-          setTimeout(() => {
-            cell.textContent = cell.dataset.letter;
-            cell.classList.add("revealed");
-          }, cell.dataset.position * 150);
-        }
-      }
-    }
-  });
-
-  // Révélation de tous les mots
-  socket.on("revealAll", () => {
-    for (let r = 0; r < GRID_SIZE; r++) {
-      for (let c = 0; c < GRID_SIZE; c++) {
-        const cell = gridCells[r][c];
-        if (cell.dataset.letter && !cell.classList.contains("revealed")) {
-          setTimeout(() => {
-            cell.textContent = cell.dataset.letter;
-            cell.classList.add("revealed");
-          }, cell.dataset.position * 100);
-        }
-      }
-    }
-  });
-</script>
+  </script>
 </body>
 
 </html>

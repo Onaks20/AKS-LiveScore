@@ -2,279 +2,235 @@
 <html lang="fr">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Arrêt sur image – GSDDM</title>
+    <meta charset="utf-8">
+    <title>Arrêt sur Image - Public</title>
     <script src="/socket.io/socket.io.js"></script>
-
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        /* ================= RESET ================= */
+        :root {
+            --primary: #012970;
+            --primary-light: #024ea2;
+            --glass-bg: rgba(255, 255, 255, 0.12);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: "Segoe UI", Arial, sans-serif;
         }
 
         body {
-            background: #012970;
-            color: #ffffff;
-            height: 100vh;
-        }
-
-        /* ================= GLOBAL ================= */
-        .screen {
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: white;
+            font-family: 'Inter', sans-serif;
             display: flex;
             flex-direction: column;
-            height: 100%;
-            padding: 24px;
-            gap: 20px;
-        }
-
-        .glass {
-            background: rgba(255, 255, 255, 0.18);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            border-radius: 20px;
-            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.35);
-        }
-
-        /* ================= HEADER ================= */
-        header {
-            display: flex;
-            justify-content: space-between;
             align-items: center;
+            justify-content: center;
             padding: 20px;
         }
 
-        header img {
-            width: 90px;
-            border-radius: 14px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+        h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
         }
 
-        header h1 {
-            text-align: center;
-            font-size: 2.6rem;
-        }
-
-        header h3 {
-            margin-top: 10px;
-            font-size: 1.6rem;
+        #status {
+            font-size: 1.4rem;
+            margin-bottom: 40px;
             opacity: 0.9;
         }
 
-        #teamName {
-            margin-top: 6px;
-            font-size: 1.3rem;
-            color: #cce0ff;
-        }
-
-        /* ================= IMAGE ZONE ================= */
-        .image-zone {
-            flex: 1;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .image-container {
+        #imageContainer {
             position: relative;
-            width: 100%;
             max-width: 900px;
-            aspect-ratio: 16 / 9;
+            width: 100%;
             border-radius: 20px;
             overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            box-shadow: var(--shadow);
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
         }
 
-        .image-container img {
+        #publicImage {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
+            height: auto;
+            display: block;
         }
 
-        /* ================= MASK SYSTEM ================= */
-        .mask-layer {
+        #gridOverlay {
             position: absolute;
             inset: 0;
             display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            grid-template-rows: repeat(4, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            grid-template-columns: repeat(10, 1fr);
             pointer-events: none;
         }
 
-        .mask {
-            background: rgba(0, 0, 0, 0.75);
-            transition: opacity 0.6s ease, transform 0.6s ease;
+        .tile {
+            background: black;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .mask.revealed {
-            opacity: 0;
-            transform: scale(1.1);
+        .tile.level-1 {
+            background: linear-gradient(rgba(255, 0, 0, 0.5), rgba(255, 0, 0, 0.5)), url() center/cover;
+            filter: blur(20px);
         }
 
-        /* ================= FOOTER ================= */
-        footer {
-            padding: 18px;
+        .tile.level-2 {
+            background: linear-gradient(rgba(255, 165, 0, 0.4), rgba(255, 165, 0, 0.4)), url() center/cover;
+            filter: blur(12px);
         }
 
-        .info-bar {
-            display: flex;
-            justify-content: space-between;
-            gap: 20px;
+        .tile.level-3 {
+            background: linear-gradient(rgba(0, 128, 255, 0.3), rgba(0, 128, 255, 0.3)), url() center/cover;
+            filter: blur(6px);
         }
 
-        .info-box {
-            flex: 1;
-            text-align: center;
+        .tile.level-4 {
+            background: linear-gradient(rgba(0, 200, 0, 0.2), rgba(0, 200, 0, 0.2)), url() center/cover;
+            filter: blur(2px);
+            opacity: 0.98;
         }
 
-        .label {
-            opacity: 0.8;
-            margin-bottom: 6px;
-            font-size: 1.1rem;
-        }
-
-        .value {
-            font-size: 2.2rem;
-            font-weight: bold;
-        }
-
-        /* ================= RESPONSIVE ================= */
         @media (max-width: 768px) {
-            header h1 {
-                font-size: 2rem;
+            h1 {
+                font-size: 2.4rem;
             }
 
-            .value {
-                font-size: 1.6rem;
+            #imageContainer {
+                max-width: 100%;
+                border-radius: 16px;
+            }
+
+            #status {
+                font-size: 1.2rem;
             }
         }
     </style>
 </head>
 
 <body>
-    <div class="screen">
+    <h1>Arrêt sur Image</h1>
+    <p id="status">En attente de l'administrateur...</p>
 
-        <!-- HEADER -->
-        <header class="glass">
-            <img src="images/Image1.jpg" />
-            <div>
-                <h1>Groupe Scolaire David Diop Mendes</h1>
-                <h3>ARRÊT SUR IMAGE</h3>
-                <p id="teamName">Équipe A</p>
-            </div>
-            <img src="images/image2.jpg" />
-        </header>
-
-        <!-- IMAGE -->
-        <main class="image-zone glass">
-            <div class="image-container">
-                <img id="mainImage" src="images/arretsurimage.jpg" />
-                <div class="mask-layer" id="maskLayer"></div>
-            </div>
-        </main>
-
-        <!-- FOOTER -->
-        <footer class="glass">
-            <div class="info-bar">
-                <div class="info-box">
-                    <div class="label">Niveau</div>
-                    <div class="value" id="niveau">Niveau 1</div>
-                </div>
-                <div class="info-box">
-                    <div class="label">Points</div>
-                    <div class="value" id="points">40 pts</div>
-                </div>
-                <div class="info-box">
-                    <div class="label">État</div>
-                    <div class="value">Observation</div>
-                </div>
-            </div>
-        </footer>
+    <div id="imageContainer">
+        <img id="publicImage" src="" alt="Image à deviner">
+        <div id="gridOverlay"></div>
     </div>
+    <br>
+    <div id="correctNameDisplay" style="display:none; margin-top: 40px;">
+        <h2 style="font-size: 2.5rem; color: #a8d0ff;">Le nom est :</h2>
+        <h1 id="nameText"
+            style="font-size: 4rem; font-weight: bold; color: white; text-shadow: 0 0 20px rgba(255,255,255,0.5); margin-top: 20px;">
+        </h1>
+        <style>
+            #correctNameDisplay {
+                text-align: center;
+                animation: fadeIn 1s ease-in;
+            }
 
+            @keyframes fadeIn {
+                from {
+                    opacity: 0;
+                    transform: scale(0.8);
+                }
+
+                to {
+                    opacity: 1;
+                    transform: scale(1);
+                }
+            }
+        </style>
+    </div>
     <script>
         const socket = io();
 
-        const maskLayer = document.getElementById("maskLayer");
-        const mainImage = document.getElementById("mainImage");
-        const niveauEl = document.getElementById("niveau");
-        const pointsEl = document.getElementById("points");
+        const publicImage = document.getElementById("publicImage");
+        const gridOverlay = document.getElementById("gridOverlay");
+        const status = document.getElementById("status");
+        const imageContainer = document.getElementById("imageContainer");
 
-        const LEVELS = [
-            { level: 1, points: 40 },
-            { level: 2, points: 30 },
-            { level: 3, points: 20 },
-            { level: 4, points: 10 }
-        ];
+        let currentImageSrc = null;
 
-        let zones = [];
-        let revealedZones = [];
-
-        function createMasks() {
-            maskLayer.innerHTML = "";
-            for (let i = 0; i < 16; i++) {
-                const mask = document.createElement("div");
-                mask.classList.add("mask");
-                mask.dataset.index = i;
-                maskLayer.appendChild(mask);
+        // Création de la grille 10x10
+        function createGrid() {
+            gridOverlay.innerHTML = "";
+            for (let i = 0; i < 100; i++) {
+                const tile = document.createElement("div");
+                tile.classList.add("tile");
+                tile.dataset.id = i;
+                gridOverlay.appendChild(tile);
             }
         }
 
-        function revealZone(index) {
-            if (!zones[index]) return;
-            const zone = zones[index];
+        // Application des niveaux aux tuiles
+        function applyTiles(tiles = []) {
+            // Reset toutes les tuiles
+            document.querySelectorAll(".tile").forEach(tile => {
+                tile.className = "tile"; // Garde seulement "tile"
+            });
 
-            const masks = Array.from(maskLayer.children);
-
-            masks.forEach((mask, i) => {
-                const row = Math.floor(i / 4);
-                const col = i % 4;
-                const x = col / 4;
-                const y = row / 4;
-                const w = 1 / 4;
-                const h = 1 / 4;
-
-                if (
-                    x >= zone.x &&
-                    x < zone.x + zone.w &&
-                    y >= zone.y &&
-                    y < zone.y + zone.h
-                ) {
-                    mask.classList.add("revealed");
+            // Applique les niveaux
+            tiles.forEach(tile => {
+                const tileElement = document.querySelector(`.tile[data-id="${tile.id}"]`);
+                if (tileElement && tile.level) {
+                    tileElement.classList.add(`level-${tile.level}`);
                 }
             });
-
-            revealedZones[index] = true;
-            updateUI(index);
         }
 
-        function updateUI(levelIndex) {
-            const levelData = LEVELS[levelIndex] || LEVELS[3];
-            niveauEl.textContent = `Niveau ${levelData.level}`;
-            pointsEl.textContent = `${levelData.points} pts`;
-        }
+        socket.on("stopImageUpdate", (data) => {
+            if (!data || !data.image) {
+                status.textContent = "En attente de l'administrateur...";
+                publicImage.src = "";
+                publicImage.style.display = "none";
+                gridOverlay.style.display = "none";
+                createGrid();
+                return;
+            }
 
-        // Réception des zones de l'admin
-        socket.on("updateZones", (newZones) => {
-            zones = newZones;
-            revealedZones = zones.map(() => false);
-            createMasks();
-            // Révéler les zones déjà validées
-            zones.forEach((z, i) => {
-                if (revealedZones[i]) revealZone(i);
-            });
+            status.textContent = "Devinez l'image !";
+
+            // Nouvelle image → recréer tout
+            if (data.image !== currentImageSrc) {
+                currentImageSrc = data.image;
+                publicImage.src = data.image;
+                publicImage.style.display = "block";
+                gridOverlay.style.display = "grid";
+                createGrid(); // Recrée la grille propre
+            }
+
+            // Applique les tuiles révélées
+            applyTiles(data.tiles || []);
         });
 
-        // Initialisation
-        socket.on("initGame", (gameData) => {
-            zones = gameData.zones || [];
-            revealedZones = zones.map(() => false);
-            createMasks();
+        // Reset complet
+        socket.on("stopImageReset", () => {
+            status.textContent = "En attente de l'administrateur...";
+            publicImage.src = "";
+            publicImage.style.display = "none";
+            gridOverlay.style.display = "none";
+            document.getElementById("correctNameDisplay").style.display = "none";
+            currentImageSrc = null;
+            createGrid();
         });
+
+        // Réception du nom correct
+        socket.on("displayCorrectName", (name) => {
+            document.getElementById("nameText").textContent = name;
+            document.getElementById("correctNameDisplay").style.display = "block";
+            status.textContent = "Bravo à l'équipe qui a deviné !";
+        });
+        // Initialisation au chargement
+        createGrid();
     </script>
 </body>
+
 </html>

@@ -434,660 +434,689 @@
         </select>
         <button onclick="programmerMatch()">Programmer</button>
       </div>
-    </div>
-    <h2>Gestion Arrêt sur Image & Mots croisés</h2>
-    <div class="stop-image-admin">
-      <input type="file" id="imageInput" accept="image/*" />
+      <div class="stop-image-admin">
+        <h2>Gestion Arrêt sur Image</h2>
+        <input type="file" id="imageInput" accept="image/*" />
 
-      <select id="levelSelector">
-        <option value="1">Niveau 1 (40 pts)</option>
-        <option value="2">Niveau 2 (30 pts)</option>
-        <option value="3">Niveau 3 (20 pts)</option>
-        <option value="4">Niveau 4 (10 pts)</option>
-      </select>
+        <select id="levelSelector">
+          <option value="1">Niveau 1 (40 pts)</option>
+          <option value="2">Niveau 2 (30 pts)</option>
+          <option value="3">Niveau 3 (20 pts)</option>
+          <option value="4">Niveau 4 (10 pts)</option>
+        </select>
+        <button class="reveal-full" onclick="revelerImage()">Révéler l'image complète</button>
 
-      <div id="imageWrapper">
-        <img id="sourceImage" />
-        <div id="gridOverlay"></div>
-      </div>
-      <script>
-        // ===============================
-        // CONFIGURATION
-        // ===============================
-        const GRID_ROWS = 10;
-        const GRID_COLS = 10;
+        <div class="soumission">
+          <input type="text" id="correctName" placeholder="Nom correct du personnage / de l'image" />
+          <button onclick="envoyerNom()">Envoyer le nom</button>
+        </div>
 
-        const imageInput = document.getElementById("imageInput");
-        const sourceImage = document.getElementById("sourceImage");
-        const gridOverlay = document.getElementById("gridOverlay");
-        const levelSelector = document.getElementById("levelSelector");
+        <button class="reset" onclick="reinitialiserImage()">Réinitialiser l'image</button>
 
-        // Stockage central
-        const gameData = {
-          image: null,
-          tiles: [] // { id, row, col, level }
-        };
+        <div id="imageWrapper">
+          <img id="sourceImage" />
+          <div id="gridOverlay"></div>
+        </div>
+        <script>
+          // ===============================
+          // CONFIGURATION
+          // ===============================
+          const GRID_ROWS = 10;
+          const GRID_COLS = 10;
 
-        // ===============================
-        // IMAGE UPLOAD
-        // ===============================
-        imageInput.addEventListener("change", (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
+          const imageInput = document.getElementById("imageInput");
+          const sourceImage = document.getElementById("sourceImage");
+          const gridOverlay = document.getElementById("gridOverlay");
+          const levelSelector = document.getElementById("levelSelector");
 
-          const reader = new FileReader();
-          reader.onload = () => {
-            sourceImage.src = reader.result;
-            gameData.image = reader.result;
-
-            sourceImage.onload = () => {
-              createGrid();
-            };
+          // État local
+          let gameState = {
+            image: null,
+            tiles: [] // { id, row, col, level }
           };
-          reader.readAsDataURL(file);
-        });
 
-        // ===============================
-        // CRÉATION DE LA GRILLE
-        // ===============================
-        function createGrid() {
-          gridOverlay.innerHTML = "";
-          gameData.tiles = [];
+          // ===============================
+          // CHARGEMENT IMAGE
+          // ===============================
+          imageInput.addEventListener("change", (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
 
-          gridOverlay.style.display = "grid";
-          gridOverlay.style.gridTemplateRows = `repeat(${GRID_ROWS}, 1fr)`;
-          gridOverlay.style.gridTemplateColumns = `repeat(${GRID_COLS}, 1fr)`;
+            const reader = new FileReader();
+            reader.onload = () => {
+              sourceImage.src = reader.result;
+              gameState.image = reader.result;
 
-          let id = 0;
+              sourceImage.onload = () => {
+                createGrid();
+                broadcastState(); // Envoie l'image au public dès le chargement
+              };
+            };
+            reader.readAsDataURL(file);
+          });
 
-          for (let row = 0; row < GRID_ROWS; row++) {
-            for (let col = 0; col < GRID_COLS; col++) {
-              const tile = document.createElement("div");
-              tile.classList.add("tile");
-              tile.dataset.id = id;
-              tile.dataset.row = row;
-              tile.dataset.col = col;
-              tile.dataset.level = "";
+          // ===============================
+          // CRÉATION GRILLE
+          // ===============================
+          function createGrid() {
+            gridOverlay.innerHTML = "";
+            gameState.tiles = [];
 
-              tile.addEventListener("click", () => selectTile(tile));
+            gridOverlay.style.display = "grid";
+            gridOverlay.style.gridTemplateRows = `repeat(${GRID_ROWS}, 1fr)`;
+            gridOverlay.style.gridTemplateColumns = `repeat(${GRID_COLS}, 1fr)`;
 
-              gridOverlay.appendChild(tile);
+            let id = 0;
+            for (let row = 0; row < GRID_ROWS; row++) {
+              for (let col = 0; col < GRID_COLS; col++) {
+                const tile = document.createElement("div");
+                tile.classList.add("tile");
+                tile.dataset.id = id;
+                tile.dataset.row = row;
+                tile.dataset.col = col;
+                tile.dataset.level = "";
 
-              gameData.tiles.push({
-                id,
-                row,
-                col,
-                level: null
-              });
+                tile.addEventListener("click", () => toggleTile(tile));
 
-              id++;
+                gridOverlay.appendChild(tile);
+
+                gameState.tiles.push({
+                  id,
+                  row,
+                  col,
+                  level: null
+                });
+
+                id++;
+              }
             }
           }
-        }
 
-        // ===============================
-        // SÉLECTION D’UNE CASE
-        // ===============================
-        function selectTile(tileElement) {
-          const level = parseInt(levelSelector.value);
-          const tileId = parseInt(tileElement.dataset.id);
+          // ===============================
+          // TOGGLE TUILLE (sélection/désélection)
+          // ===============================
+          function toggleTile(tileElement) {
+            const selectedLevel = parseInt(levelSelector.value);
+            const currentLevel = tileElement.dataset.level ? parseInt(tileElement.dataset.level) : null;
+            const tileId = parseInt(tileElement.dataset.id);
 
-          // Toggle logique
-          if (tileElement.dataset.level == level) {
-            tileElement.dataset.level = "";
-            tileElement.style.backgroundColor = "transparent";
-            updateTileData(tileId, null);
-            return;
+            let newLevel;
+
+            if (currentLevel === selectedLevel) {
+              // Désélection
+              newLevel = null;
+              tileElement.dataset.level = "";
+              tileElement.style.backgroundColor = "transparent";
+            } else {
+              // Nouvelle sélection
+              newLevel = selectedLevel;
+              tileElement.dataset.level = selectedLevel;
+              tileElement.style.backgroundColor = getLevelColor(selectedLevel);
+            }
+
+            // Mise à jour état local
+            const tileData = gameState.tiles.find(t => t.id === tileId);
+            if (tileData) {
+              tileData.level = newLevel;
+            }
+
+            // Diffusion immédiate au public
+            broadcastState();
           }
 
-          tileElement.dataset.level = level;
-          tileElement.style.backgroundColor = getLevelColor(level);
-          updateTileData(tileId, level);
-        }
-
-        // ===============================
-        // MISE À JOUR DATA
-        // ===============================
-        function updateTileData(id, level) {
-          const tile = gameData.tiles.find(t => t.id === id);
-          if (tile) {
-            tile.level = level;
+          // ===============================
+          // COULEURS PAR NIVEAU
+          // ===============================
+          function getLevelColor(level) {
+            switch (level) {
+              case 1: return "rgba(255, 0, 0, 0.5)";
+              case 2: return "rgba(255, 165, 0, 0.5)";
+              case 3: return "rgba(0, 128, 255, 0.5)";
+              case 4: return "rgba(0, 200, 0, 0.5)";
+              default: return "transparent";
+            }
           }
-        }
 
-        // ===============================
-        // COULEURS PAR NIVEAU
-        // ===============================
-        function getLevelColor(level) {
-          switch (level) {
-            case 1: return "rgba(255, 0, 0, 0.4)";
-            case 2: return "rgba(255, 165, 0, 0.4)";
-            case 3: return "rgba(0, 128, 255, 0.4)";
-            case 4: return "rgba(0, 200, 0, 0.4)";
-            default: return "transparent";
+          // ===============================
+          // DIFFUSION AU SERVEUR / PUBLIC
+          // ===============================
+          function broadcastState() {
+            const stateToSend = {
+              image: gameState.image,
+              grid: { rows: GRID_ROWS, cols: GRID_COLS },
+              tiles: gameState.tiles.filter(t => t.level !== null).map(t => ({
+                id: t.id,
+                level: t.level
+              }))
+            };
+
+            socket.emit("stopImageUpdate", stateToSend);
+            console.log("État diffusé :", stateToSend.tiles.length, "tuiles révélées");
           }
-        }
 
-        // ===============================
-        // EXPORT (POUR SERVER / PUBLIC)
-        // ===============================
-        function getAdminGameState() {
-          return {
-            image: gameData.image,
-            grid: {
-              rows: GRID_ROWS,
-              cols: GRID_COLS
-            },
-            tiles: gameData.tiles.filter(t => t.level !== null)
-          };
-        }
+          // ===============================
+          // RÉINITIALISATION (optionnel, ajoute un bouton si besoin)
+          // ===============================
+          function resetStopImage() {
+            if (confirm("Réinitialiser l'image et toutes les révélations ?")) {
+              imageInput.value = "";
+              sourceImage.src = "";
+              gridOverlay.innerHTML = "";
+              gridOverlay.style.display = "none";
+              gameState = { image: null, tiles: [] };
+              socket.emit("stopImageReset");
+            }
+          }
+          // ===============================
+          // BOUTON RÉVÉLER IMAGE COMPLÈTE & RÉVÉLER NOM
+          // ===============================
+          // Révéler toute l'image (toutes les tuiles niveau 4)
+          function revelerImage() {
+            if (!gameState.image) {
+              alert("Chargez d'abord une image !");
+              return;
+            }
 
-      </script>
-      <style>
-        input[type="file"],
-        select {
-          background: #020617;
-          color: #e5e7eb;
-          border: 1px solid #334155;
-          padding: 10px 12px;
-          border-radius: 6px;
-          margin-bottom: 15px;
-          cursor: pointer;
-        }
+            // Met toutes les tuiles au niveau 4
+            gameState.tiles.forEach(tile => {
+              tile.level = 4;
+            });
 
-        /* ===============================
-   WRAPPER IMAGE
-================================ */
-        #imageWrapper {
-          position: relative;
-          max-width: 900px;
-          margin: auto;
-          border-radius: 12px;
-          overflow: hidden;
-          box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-        }
+            // Mise à jour visuelle admin
+            document.querySelectorAll(".tile").forEach(tileEl => {
+              tileEl.dataset.level = "4";
+              tileEl.style.backgroundColor = getLevelColor(4);
+            });
 
-        /* Image responsive */
-        #sourceImage {
-          width: 100%;
-          height: auto;
-          display: block;
-          user-select: none;
-          pointer-events: none;
-        }
+            // Diffusion au public
+            broadcastState();
+            console.log("Image entièrement révélée au public");
+          }
 
-        /* ===============================
-   GRID OVERLAY
-================================ */
-        #gridOverlay {
-          position: absolute;
-          inset: 0;
-          display: grid;
-        }
+          // Envoyer le nom correct au public
+          function envoyerNom() {
+            const nomInput = document.getElementById("correctName");
+            const nom = nomInput.value.trim();
 
-        /* ===============================
+            if (!nom) {
+              alert("Entrez le nom correct !");
+              return;
+            }
+
+            socket.emit("revealName", nom);
+            nomInput.value = "";
+            console.log(`Nom envoyé au public : "${nom}"`);
+          }
+
+          // ===============================
+          // RÉINITIALISER L'IMAGE ET LA GRILLE
+          // ===============================
+          function reinitialiserImage() {
+            if (!confirm("Réinitialiser l'image et toutes les révélations ?")) return;
+
+            // Reset local admin
+            imageInput.value = "";
+            sourceImage.src = "";
+            gridOverlay.innerHTML = "";
+            gridOverlay.style.display = "none";
+            gameState = { image: null, tiles: [] };
+
+            // Envoi reset au public
+            socket.emit("stopImageReset");
+
+            console.log("Arrêt sur Image réinitialisé (admin + public)");
+          }
+        </script>
+        <style>
+          input[type="file"],
+          select {
+            background: #020617;
+            color: #e5e7eb;
+            border: 1px solid #334155;
+            padding: 10px 12px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            cursor: pointer;
+          }
+
+          /* ===============================
+           WRAPPER IMAGE
+            ================================ */
+          #imageWrapper {
+            position: relative;
+            max-width: 900px;
+            margin: auto;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+          }
+
+          /* Image responsive */
+          #sourceImage {
+            width: 100%;
+            height: auto;
+            display: block;
+            user-select: none;
+            pointer-events: none;
+          }
+
+          /* ===============================
+            GRID OVERLAY
+            ================================ */
+          #gridOverlay {
+            position: absolute;
+            inset: 0;
+            display: grid;
+          }
+
+          /* ===============================
             TILE (CARREAU)
           ================================ */
-        .tile {
-          border: 1px solid rgba(255, 255, 255, 0.15);
-          cursor: pointer;
-          transition: background-color 0.15s ease, box-shadow 0.15s ease;
-        }
-
-        .tile::after {
-          content: attr(data-id);
-          font-size: 10px;
-          color: rgba(255, 255, 255, 0.4);
-          padding: 4px;
-        }
-
-        .tile:hover {
-          box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4);
-        }
-
-        @media (max-width: 768px) {
-          #imageWrapper {
-            max-width: 100%;
+          .tile {
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            cursor: pointer;
+            transition: background-color 0.15s ease, box-shadow 0.15s ease;
           }
-        }
-      </style>
-    </div>
-    <h2>Gestion Mots Croisés</h2>
-    <div class="mot-croise-admin">
-      <div class="form-container">
-        <input type="text" id="wordInput" placeholder="Mot">
-        <input type="text" id="clueInput" placeholder="Indice">
-        <select id="directionInput">
-          <option value="h">Horizontal</option>
-          <option value="v">Vertical</option>
-        </select>
-        <button id="addWordBtn">Ajouter Mot</button>
-      </div>
 
-      <div class="controls">
-        <button id="revealWordBtn">Révéler Mot Sélectionné</button>
-        <button id="revealAllBtn">Révéler Tous les Mots</button>
-      </div>
+          .tile::after {
+            content: attr(data-id);
+            font-size: 10px;
+            color: rgba(255, 255, 255, 0.4);
+            padding: 4px;
+          }
 
-      <div class="grid-wrapper">
-        <div class="grid" id="grid"></div>
-      </div>
+          .tile:hover {
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4);
+          }
 
-      <div class="clues" id="clues">
-        <h2>Indices</h2>
-        <div class="clues-panel">
-          <style>
-            .clues-panel {
-              display: flex;
-              justify-content: space-around;
-              gap: 20px;
+          @media (max-width: 768px) {
+            #imageWrapper {
+              max-width: 100%;
             }
+          }
 
-            .clues-section {
-              margin-bottom: 20px;
-            }
+          /* BOUTON RÉVÉLER IMAGE COMPLÈTE & RÉVÉLER NOM */
+          .reveal-full {
+            background: #27ae60;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 15px;
+          }
 
-            .clues-section h3 {
-              margin-bottom: 10px;
-              font-size: 1.2rem;
-            }
-          </style>
-          <div class="clues-section">
-            <h3>Horizontales</h3>
-            <div id="clues-h"></div>
-          </div>
+          .soumission input {
+            padding: 10px;
+            width: 300px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin-right: 10px;
+          }
 
-          <div class="clues-section">
-            <h3>Verticales</h3>
-            <div id="clues-v"></div>
+          .reset {
+            background: #e74c3c;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            cursor: pointer;
+          }
+        </style>
+      </div>
+      <div class="crossword-section d-flex flex-column align-items-center">
+        <div class="crossword-admin">
+          <h2>Gestion Mots Croisés</h2>
+          <p>Format : <strong>MOT|Indice</strong> par ligne</p>
+          <textarea id="words" placeholder="Mot|son indice ici..."></textarea><br>
+          <div class="buttons-controls">
+            <button class="generate" onclick="generateGrid()">Générer et diffuser</button>
+            <button class="reveal" onclick="revealAll()">Révéler tous les mots</button>
+            <button class="reset" onclick="resetGame()">Réinitialiser</button>
           </div>
         </div>
+
+        <div id="content"></div>
       </div>
 
+      <script src="./js/layout_generator.js"></script>
+      <script>
+        let currentLayout = null;
+
+        function parseInput() {
+          const lines = document.getElementById("words").value.trim().split('\n');
+          const list = [];
+          lines.forEach(line => {
+            if (!line.trim()) return;
+            const parts = line.split(/[|;:]/);
+            const word = parts[0].trim().toUpperCase().replace(/[^A-Z]/g, "");
+            const clue = parts.slice(1).join('|').trim();
+            if (word.length >= 3) list.push({ word, clue });
+          });
+          return list;
+        }
+
+        function generateGrid() {
+          const wordsWithClues = parseInput();
+          if (wordsWithClues.length === 0) return alert("Aucun mot valide");
+
+          const input_json = wordsWithClues.map(w => ({ answer: w.word.toLowerCase() }));
+          const layout = generateLayout(input_json);
+
+          currentLayout = { layout, wordsWithClues };
+
+          // Création du mapping position → indice
+          const cluesMap = {};
+          layout.result.forEach(entry => {
+            const item = wordsWithClues.find(w => w.word === entry.answer.toUpperCase());
+            if (item) cluesMap[entry.position] = item.clue;
+          });
+
+          // Envoi au serveur
+          socket.emit('newGrid', {
+            table: layout.table,
+            result: layout.result,
+            clues: cluesMap
+          });
+
+          renderAdminGrid(layout, wordsWithClues, cluesMap);
+        }
+
+        function revealWord(position) {
+          socket.emit('revealWord', position);
+          console.log(`Mot ${position} demandé pour révélation`);
+        }
+
+        function revealAll() {
+          socket.emit('revealAll');
+        }
+
+        function resetGame() {
+          socket.emit('reset');
+          document.getElementById("content").innerHTML = "<p>Partie réinitialisée</p>";
+          currentLayout = null;
+        }
+
+        function renderAdminGrid(layout, wordsWithClues, cluesMap) {
+          // === GRILLE (lettres visibles pour admin) ===
+          let html = `<div class="crossword-grid" style="grid-template-columns: repeat(${layout.cols}, 1fr);">`;
+          for (let r = 0; r < layout.rows; r++) {
+            for (let c = 0; c < layout.cols; c++) {
+              const char = layout.table[r][c];
+              const isBlank = char === '-';
+              const display = isBlank ? '' : char.toUpperCase();
+              let number = '';
+              const entry = layout.result.find(e => e.starty - 1 === r && e.startx - 1 === c);
+              if (entry) number = `<span class="number">${entry.position}</span>`;
+              html += `<div class="crossword-cell ${isBlank ? 'blank' : ''}">${number}${display}</div>`;
+            }
+          }
+          html += '</div>';
+
+          // === INDICES CLIQUABLES ===
+          const h = [], v = [];
+          layout.result.forEach(entry => {
+            const clue = cluesMap[entry.position] || "Indice manquant";
+            const button = `<button class="reveal-btn" onclick="revealWord(${entry.position})">Révéler</button>`;
+            const line = `<p><strong>${entry.position}.</strong> ${clue} ${button}</p>`;
+            if (entry.orientation === 'across') {
+              h.push(line);
+            } else {
+              v.push(line);
+            }
+          });
+
+          document.getElementById("content").innerHTML = `
+      <h2>Grille Admin (lettres visibles)</h2>
+      ${html}
+      <div class="clues-container">
+        <div class="clues-section">
+          <h3>Horizontaux</h3>
+          ${h.join('')}
+        </div>
+        <div class="clues-section">
+          <h3>Verticaux</h3>
+          ${v.join('')}
+        </div>
+      </div>
+    `;
+        }
+      </script>
 
       <style>
-        .form-container,
-        .grid-wrapper,
-        .controls {
-          margin-top: 20px;
+        textarea#words {
           width: 100%;
-          max-width: 1100px;
-        }
-
-        input,
-        select,
-        button {
-          padding: 8px 12px;
-          margin: 4px;
+          height: 250px;
+          background: #0f1525;
+          color: #dbe4ff;
+          border: 1px solid #334155;
           border-radius: 8px;
-          border: none;
-          font-size: 1rem;
+          padding: 50px;
+          font-size: 14px;
+          font-family: 'Segoe UI', Roboto, system-ui, sans-serif;
+          margin-bottom: 15px;
         }
 
-        button {
-          cursor: pointer;
-          background: var(--primary);
-          color: white;
+        .crossword-grid {
+          display: inline-grid;
+          gap: 4px;
+          background: #2c3e50;
+          padding: 20px;
+          border-radius: 15px;
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
         }
 
-        .grid-wrapper {
-          display: flex;
-          justify-content: center;
-          margin-top: 20px;
-        }
-
-        .grid {
-          display: grid;
-          grid-template-columns: repeat(15, 30px);
-          grid-template-rows: repeat(15, 30px);
-          gap: 10px;
-        }
-
-
-        .cell {
-          background: rgba(255, 255, 255, 0.18);
-          border-radius: 10px;
-          border: 1px solid rgba(255, 255, 255, 0.3);
+        .crossword-cell {
+          width: 40px;
+          height: 40px;
+          background: white;
+          border-radius: 8px;
           display: flex;
           align-items: center;
           justify-content: center;
           font-weight: bold;
-          color: white;
+          font-size: 20px;
+          color: #2c3e50;
           position: relative;
-          font-size: 1rem;
         }
 
-        .cell span {
+        .crossword-cell.blank {
+          background: black !important;
+        }
+
+        .crossword-cell .number {
           position: absolute;
-          top: 2px;
-          left: 2px;
-          font-size: 0.6rem;
-          opacity: 0.7;
+          top: 3px;
+          left: 4px;
+          font-size: 10px;
+          color: #7f8c8d;
         }
 
-        .controls button {
-          margin-right: 10px;
-          margin-top: 10px;
+        .clues-container {
+          margin-top: 50px;
+          display: flex;
+          gap: 60px;
+          justify-content: center;
+          flex-wrap: wrap;
+        }
+
+        .clues-section {
+          min-width: 350px;
+          background: rgba(255, 255, 255, 0.1);
+          padding: 20px;
+          border-radius: 15px;
+          backdrop-filter: blur(10px);
+        }
+
+        .clues-section h3 {
+          color: white;
+          text-align: center;
+          border-bottom: 2px solid #3498db;
+          padding-bottom: 10px;
+          margin-bottom: 20px;
+        }
+
+        .clues-section p {
+          margin: 12px 0;
+          font-size: 16px;
+          line-height: 1.5;
+        }
+
+        .reveal-btn {
+          margin-left: 15px;
+          padding: 6px 12px;
+          background: #05ff44;
+          color: white;
+          border: none;
+          border-radius: 6px;
+          font-size: 14px;
+          cursor: pointer;
+          transition: background 0.3s;
+        }
+
+        .reveal-btn:hover {
+          background: #007e06;
         }
       </style>
-      </style>
-      <script>
-        // ================= CONFIG =================
-        const GRID_SIZE = 15;
-        const grid = document.getElementById("grid");
-        const cluesH = document.getElementById("clues-h");
-        const cluesV = document.getElementById("clues-v");
 
-        // ================= STATE =================
-        let words = [];
-        let selectedWordIndex = null;
-        let wordCounter = 1;
+    </div>
+    <footer>
+      GSDDM LiveScore | Défi du Génie en Herbe (11ᵉ Édition) | 2025 - 2026 | V 2024.1.7 <br>
+      <div class="documents d-flex space-between"><a href="documents/GSDDM-LiveScore-Documentation.pdf" target="_blank"
+          style="color: #8a9bb8;">Documentation</a> | <a href="documents/Licence MIT.pdf" target="_blank"
+          style="color: #8a9bb8;">Licence</a></div>
+    </footer>
 
-        // ================= GRID INIT =================
-        let gridCells = Array.from({ length: GRID_SIZE }, (_, r) =>
-          Array.from({ length: GRID_SIZE }, (_, c) => {
-            const cell = document.createElement("div");
-            cell.classList.add("cell");
-            grid.appendChild(cell);
-            return cell;
-          })
+    <script>
+      function updateScore(team, value) {
+        console.log(`Envoyer score ${team} += ${value}`);
+        socket.emit('updateScore', { team, value });
+      }
+    </script>
+    <script>
+      const socket = io();
+
+      function nextLevel() {
+        socket.emit("next-level");
+      }
+
+      function resetGame() {
+        socket.emit("reset-image");
+      }
+
+      document.getElementById("imageInput").addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          socket.emit("change-image", reader.result);
+        };
+        reader.readAsDataURL(file);
+      });
+    </script>
+    <script>
+      // Équipe A
+      document.getElementById('selectA').addEventListener('change', (e) => {
+        const name = e.target.value;
+        socket.emit('updateTeamName', { team: 'A', name });
+      });
+
+      // Équipe B
+      document.getElementById('selectB').addEventListener('change', (e) => {
+        const name = e.target.value;
+        socket.emit('updateTeamName', { team: 'B', name });
+      });
+    </script>
+    <script>
+      // Informations / Message
+      document.getElementById("info-submit").addEventListener("click", () => {
+        const msg = document.getElementById("info").value;
+        console.log("Envoi du message:", msg);
+        socket.emit("adminMessage", msg);
+      });
+    </script>
+    <script>
+      function elireHomme() {
+        const nom = document.getElementById("hommeNom").value.trim();
+        const equipe = document.getElementById("hommeEquipe").value;
+
+        if (!nom) {
+          alert("Veuillez saisir le nom du joueur.");
+          return;
+        }
+
+        if (!equipe) {
+          alert("Veuillez sélectionner la classe du joueur.");
+          return;
+        }
+
+        // Envoyer via socket.io
+        socket.emit("manOfMatch", { nom, equipe });
+
+        // Actions facultatives: vider le champ ou afficher un message
+        document.getElementById("hommeNom").value = "";
+        document.getElementById("hommeEquipe").value = "";
+      }
+
+    </script>
+    <script>
+      let scheduledMatches = []; // tableau pour suivre les matchs programmés côté admin
+
+      function programmerMatch() {
+        const teamA = document.getElementById("nextTeamA").value;
+        const teamB = document.getElementById("nextTeamB").value;
+
+        if (!teamA || !teamB) {
+          alert("Veuillez sélectionner les deux équipes !");
+          return;
+        }
+
+        // Vérifier que l'une des équipes n'est pas déjà programmée
+        const duplicate = scheduledMatches.some(
+          (match) => match.teamA === teamA || match.teamB === teamB
         );
 
-        // ================= UTILS =================
-        function normalizeWord(word) {
-          return word.toUpperCase();
+        if (duplicate) {
+          alert("Une de ces équipes est déjà programmée !");
+          return;
         }
 
-        // ================= RENDER CLUES =================
-        function renderClues() {
-          cluesH.innerHTML = "";
-          cluesV.innerHTML = "";
-          words
-            .slice()
-            .sort((a, b) => a.number - b.number)
-            .forEach(w => {
-              const p = document.createElement("p");
-              p.innerHTML = `<strong>${w.number}.</strong> ${w.clue}`;
-              (w.direction === "h" ? cluesH : cluesV).appendChild(p);
-            });
+        const newMatch = { teamA, teamB };
+        scheduledMatches.push(newMatch);
+
+        // Envoyer au serveur pour mise à jour globale
+        socket.emit("scheduleMatch", newMatch);
+
+        // Réinitialiser les sélections
+        document.getElementById("nextTeamA").value = "";
+        document.getElementById("nextTeamB").value = "";
+      }
+
+      // Supprimer un match côté admin
+      function supprimerMatch(index) {
+        scheduledMatches.splice(index, 1);
+        socket.emit("deleteMatch", index);
+      }
+    </script>
+    <script>
+      document.getElementById('save-score').addEventListener('click', () => {
+        const teamA = document.getElementById('selectA').value;
+        const teamB = document.getElementById('selectB').value;
+        const aScore = parseInt(document.getElementById('scoreA').textContent) || 0;
+        const bScore = parseInt(document.getElementById('scoreB').textContent) || 0;
+
+        if (!teamA || !teamB) {
+          alert("Sélectionnez les deux équipes !");
+          return;
         }
 
-        // ================= CHECK PLACEMENT =================
-        function canPlaceWord(wordObj, row, col) {
-          let crosses = 0;
-          for (let i = 0; i < wordObj.word.length; i++) {
-            let r = row, c = col;
-            if (wordObj.direction === "h") c += i; else r += i;
-            if (r < 0 || c < 0 || r >= GRID_SIZE || c >= GRID_SIZE) return false;
-            const char = wordObj.word[i];
-            const existing = gridCells[r][c].textContent || "";
-            if (char === " ") continue;
-            if (existing !== "" && existing !== char) return false; // pas d'écrasement
-            if (existing === char) crosses++;
-          }
-          // À partir du 2e mot, il doit y avoir au moins un croisement
-          if (words.length > 0 && crosses === 0) return false;
-          return true;
-        }
-
-        // ================= PLACE WORD =================
-        function placeWord(wordObj) {
-          if (words.length === 0) {
-            wordObj.row = Math.floor(GRID_SIZE / 2);
-            wordObj.col = Math.floor((GRID_SIZE - wordObj.word.length) / 2);
-            return true;
-          }
-
-          for (let placed of words) {
-            for (let i = 0; i < placed.word.length; i++) {
-              for (let j = 0; j < wordObj.word.length; j++) {
-                if (placed.word[i] !== wordObj.word[j]) continue;
-                let row, col;
-                if (placed.direction === "h" && wordObj.direction === "v") {
-                  row = placed.row - j;
-                  col = placed.col + i;
-                } else if (placed.direction === "v" && wordObj.direction === "h") {
-                  row = placed.row + i;
-                  col = placed.col - j;
-                } else continue;
-                if (canPlaceWord(wordObj, row, col)) {
-                  wordObj.row = row;
-                  wordObj.col = col;
-                  return true;
-                }
-              }
-            }
-          }
-          return false;
-        }
-
-        // ================= ADD WORD =================
-        document.getElementById("addWordBtn").addEventListener("click", () => {
-          const rawWord = document.getElementById("wordInput").value.trim();
-          const clue = document.getElementById("clueInput").value.trim();
-          const direction = document.getElementById("directionInput").value;
-
-          if (!rawWord || !clue) return alert("Mot et indice requis");
-
-          const wordObj = {
-            word: normalizeWord(rawWord),
-            clue,
-            direction,
-            revealed: false,
-            number: wordCounter++
-          };
-
-          if (placeWord(wordObj)) {
-            words.push(wordObj);
-            renderGrid(true);
-            renderClues(); // 🔥 Mettre à jour les indices immédiatement
-            socket.emit("updateGrid", { words }); // 🔗 Envoi au public
-            document.getElementById("wordInput").value = "";
-            document.getElementById("clueInput").value = "";
-          } else alert("Placement impossible : aucun croisement valide.");
-        });
-
-        // ================= RENDER GRID =================
-        function renderGrid(isAdmin = true) {
-          for (let r = 0; r < GRID_SIZE; r++) {
-            for (let c = 0; c < GRID_SIZE; c++) {
-              const cell = gridCells[r][c];
-              cell.innerHTML = "";
-              cell.textContent = "";
-              cell.className = "cell";
-              cell.dataset.wordIndex = "";
-              cell.dataset.position = "";
-              cell.classList.remove("black");
-            }
-          }
-
-          words.forEach((w, index) => {
-            for (let i = 0; i < w.word.length; i++) {
-              let r = w.row, c = w.col;
-              if (w.direction === "h") c += i; else r += i;
-              const char = w.word[i];
-              const cell = gridCells[r][c];
-              if (char === " ") { cell.classList.add("black"); continue; }
-
-              // ⚡ si déjà une lettre (croisement), on ne l’écrase pas
-              if (!cell.textContent.includes(char)) cell.textContent += char;
-
-              cell.dataset.wordIndex = index;
-              cell.dataset.position = i;
-
-              // Numéro en exposant seulement sur première lettre
-              if (i === 0) {
-                const num = document.createElement("sup");
-                num.className = "number";
-                num.textContent = w.number;
-                cell.appendChild(num);
-              }
-            }
-          });
-        }
-
-        // ================= REVEAL WORD =================
-        document.getElementById("revealWordBtn").addEventListener("click", () => {
-          if (selectedWordIndex === null) return alert("Sélectionnez un mot");
-          words[selectedWordIndex].revealed = true;
-          socket.emit("revealWord", selectedWordIndex); // 🔗 Public
-        });
-
-        // ================= REVEAL ALL =================
-        document.getElementById("revealAllBtn").addEventListener("click", () => {
-          words.forEach(w => w.revealed = true);
-          socket.emit("revealAll"); // 🔗 Public
-        });
-
-        // ================= SELECT WORD =================
-        gridCells.flat().forEach(cell => {
-          cell.addEventListener("click", () => {
-            if (cell.dataset.wordIndex !== "") {
-              selectedWordIndex = parseInt(cell.dataset.wordIndex);
-              alert(`Mot sélectionné : ${words[selectedWordIndex].word}\nIndice : ${words[selectedWordIndex].clue}`);
-            }
-          });
-        });
-      </script>
-    </div>
-
-  </div>
-
-  <footer>
-    GSDDM LiveScore | Défi du Génie en Herbe (11ᵉ Édition) | 2025 - 2026 | V 2024.1.7 <br>
-    <div class="documents d-flex space-between"><a href="documents/GSDDM-LiveScore-Documentation.pdf" target="_blank"
-        style="color: #8a9bb8;">Documentation</a> | <a href="documents/Licence MIT.pdf" target="_blank"
-        style="color: #8a9bb8;">Licence</a></div>
-  </footer>
-
-  <script>
-    function updateScore(team, value) {
-      console.log(`Envoyer score ${team} += ${value}`);
-      socket.emit('updateScore', { team, value });
-    }
-  </script>
-  <script>
-    const socket = io();
-
-    function nextLevel() {
-      socket.emit("next-level");
-    }
-
-    function resetGame() {
-      socket.emit("reset-image");
-    }
-
-    document.getElementById("imageInput").addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = () => {
-        socket.emit("change-image", reader.result);
-      };
-      reader.readAsDataURL(file);
-    });
-  </script>
-  <script>
-    // Équipe A
-    document.getElementById('selectA').addEventListener('change', (e) => {
-      const name = e.target.value;
-      socket.emit('updateTeamName', { team: 'A', name });
-    });
-
-    // Équipe B
-    document.getElementById('selectB').addEventListener('change', (e) => {
-      const name = e.target.value;
-      socket.emit('updateTeamName', { team: 'B', name });
-    });
-  </script>
-  <script>
-    // Informations / Message
-    document.getElementById("info-submit").addEventListener("click", () => {
-      const msg = document.getElementById("info").value;
-      console.log("Envoi du message:", msg);
-      socket.emit("adminMessage", msg);
-    });
-  </script>
-  <script>
-    function elireHomme() {
-      const nom = document.getElementById("hommeNom").value.trim();
-      const equipe = document.getElementById("hommeEquipe").value;
-
-      if (!nom) {
-        alert("Veuillez saisir le nom du joueur.");
-        return;
-      }
-
-      if (!equipe) {
-        alert("Veuillez sélectionner la classe du joueur.");
-        return;
-      }
-
-      // Envoyer via socket.io
-      socket.emit("manOfMatch", { nom, equipe });
-
-      // Actions facultatives: vider le champ ou afficher un message
-      document.getElementById("hommeNom").value = "";
-      document.getElementById("hommeEquipe").value = "";
-    }
-
-  </script>
-  <script>
-    let scheduledMatches = []; // tableau pour suivre les matchs programmés côté admin
-
-    function programmerMatch() {
-      const teamA = document.getElementById("nextTeamA").value;
-      const teamB = document.getElementById("nextTeamB").value;
-
-      if (!teamA || !teamB) {
-        alert("Veuillez sélectionner les deux équipes !");
-        return;
-      }
-
-      // Vérifier que l'une des équipes n'est pas déjà programmée
-      const duplicate = scheduledMatches.some(
-        (match) => match.teamA === teamA || match.teamB === teamB
-      );
-
-      if (duplicate) {
-        alert("Une de ces équipes est déjà programmée !");
-        return;
-      }
-
-      const newMatch = { teamA, teamB };
-      scheduledMatches.push(newMatch);
-
-      // Envoyer au serveur pour mise à jour globale
-      socket.emit("scheduleMatch", newMatch);
-
-      // Réinitialiser les sélections
-      document.getElementById("nextTeamA").value = "";
-      document.getElementById("nextTeamB").value = "";
-    }
-
-    // Supprimer un match côté admin
-    function supprimerMatch(index) {
-      scheduledMatches.splice(index, 1);
-      socket.emit("deleteMatch", index);
-    }
-  </script>
-  <script>
-    document.getElementById('save-score').addEventListener('click', () => {
-      const teamA = document.getElementById('selectA').value;
-      const teamB = document.getElementById('selectB').value;
-      const aScore = parseInt(document.getElementById('scoreA').textContent) || 0;
-      const bScore = parseInt(document.getElementById('scoreB').textContent) || 0;
-
-      if (!teamA || !teamB) {
-        alert("Sélectionnez les deux équipes !");
-        return;
-      }
-
-      console.log("Admin envoie score :", { teamA, teamB, aScore, bScore });
-      socket.emit('saveScore', { teamA, teamB, aScore, bScore });
-    });
-  </script>
+        console.log("Admin envoie score :", { teamA, teamB, aScore, bScore });
+        socket.emit('saveScore', { teamA, teamB, aScore, bScore });
+      });
+    </script>
 </body>
 
 </html>
