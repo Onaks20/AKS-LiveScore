@@ -46,36 +46,56 @@
             opacity: 0.9;
         }
 
+        /* ===== IMAGE CONTAINER (ADAPTATIF) ===== */
         #imageContainer {
             position: relative;
-            max-width: 900px;
-            width: 100%;
-            border-radius: 20px;
+            width: min(90vw, 720px);
+            /* priorité grands écrans */
+            max-height: 80vh;
+            background: #000;
+            border-radius: 12px;
             overflow: hidden;
             box-shadow: var(--shadow);
-            background: var(--glass-bg);
-            backdrop-filter: blur(12px);
-            border: 1px solid var(--glass-border);
+            border: 2px solid var(--border);
+
+            /* clé magique */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
+        /* Image : elle décide du format */
         #publicImage {
-            width: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            width: auto;
             height: auto;
+            object-fit: contain;
             display: block;
+            background: #000;
         }
 
+        /* ===== GRILLE TOUJOURS CALÉE SUR L’IMAGE ===== */
         #gridOverlay {
             position: absolute;
             inset: 0;
             display: grid;
-            grid-template-rows: repeat(10, 1fr);
             grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
             pointer-events: none;
         }
+
 
         .tile {
             background: black;
             transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @media (max-width: 768px) {
+            #imageContainer {
+                max-width: auto;
+                max-height: 70vh;
+            }
         }
 
         .tile.level-1 {
@@ -94,11 +114,11 @@
         }
 
         .tile.level-4 {
-            background: linear-gradient(rgba(0, 200, 0, 0.2), rgba(0, 200, 0, 0.2)), url() center/cover;
+            background: linear-gradient(rgba(132, 219, 132, 0), rgba(0, 155, 0, 0)), url() center/cover;
             filter: blur(2px);
             opacity: 0.98;
         }
-
+        /* Responsive */
         @media (max-width: 768px) {
             h1 {
                 font-size: 2.4rem;
@@ -111,6 +131,21 @@
 
             #status {
                 font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 900px) {
+            #imageContainer {
+                width: 95vw;
+                max-height: 70vh;
+            }
+        }
+
+        @media (max-width: 600px) {
+            #imageContainer {
+                width: 100vw;
+                max-height: 65vh;
+                border-radius: 8px;
             }
         }
     </style>
@@ -192,6 +227,7 @@
                 publicImage.src = "";
                 publicImage.style.display = "none";
                 gridOverlay.style.display = "none";
+                document.getElementById("correctNameDisplay").style.display = "none";
                 createGrid();
                 return;
             }

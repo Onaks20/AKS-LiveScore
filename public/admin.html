@@ -265,7 +265,9 @@
 
   #loginButton {
     padding: 16px 50px;
+    /* Garde ta taille généreuse */
     background: linear-gradient(90deg, #012970, #9999ff);
+    /* Ton gradient bleu magnifique */
     color: white;
     font-size: 18px;
     font-weight: 600;
@@ -274,16 +276,35 @@
     cursor: pointer;
     box-shadow: 0 10px 30px #012970;
     transition: all 0.3s ease;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    outline: none;
+    min-height: 48px;
+    min-width: 200px;
+    transform: translateY(0);
   }
 
   #loginButton:hover {
     transform: translateY(-4px);
-    box-shadow: 0 15px 40px rgba(36, 91, 102, 0.5);
+    box-shadow: 0 15px 40px rgba(1, 41, 112, 0.6);
   }
 
   #loginButton:active {
-    transform: translateY(0);
+    transform: translateY(2px);
+    /* Enfoncement au clic/tap → feedback immédiat */
+    box-shadow: 0 6px 20px rgba(1, 41, 112, 0.5);
   }
+
+  /* Pour les très petits écrans (smartphones) */
+  @media (max-width: 480px) {
+    #loginButton {
+      padding: 18px 40px;
+      font-size: 20px;
+      min-width: 80vw;
+    }
+  }
+
 
   #loginScreen {
     transition: opacity 0.4s ease;
@@ -361,9 +382,90 @@
       <h1>Accès Administrateur</h1>
       <p>Entrez le mot de passe pour accéder à la console:</p>
       <input type="password" id="adminPassword" placeholder="Mot de passe" autofocus>
-      <button id="loginButton">Valider</button>
+      <button type="button" id="loginButton" style="touch-action: manipulation;">Valider</button>
       <p id="loginError"></p>
     </div>
+    <script>
+      // ===============================
+      // HASHAGE DU MOT DE PASSE (SHA-256)
+      // ===============================
+      async function hashPassword(input) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(input);
+        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+      }
+
+      // Hash du mot de passe "AKS707LS"
+      const ADMIN_PASSWORD_HASH = "884fbf9dd264c4311138085e3d2ed07fe6f83fea9f0a98865727a6dfd824f734"; // AKS707LS
+
+      // ===============================
+      // VÉRIFICATION DU MOT DE PASSE
+      // ===============================
+      async function verifyPassword() {
+        const input = document.getElementById("adminPassword").value.trim();
+        const error = document.getElementById("loginError");
+        const loginScreen = document.getElementById("loginScreen");
+        const adminContent = document.getElementById("adminContent");
+
+        // Réinitialise le message d'erreur
+        error.textContent = "";
+        error.classList.remove("show");
+
+        if (!input) {
+          error.textContent = "Veuillez saisir un mot de passe.";
+          error.classList.add("show");
+          return;
+        }
+
+        const inputHash = await hashPassword(input);
+
+        if (inputHash === ADMIN_PASSWORD_HASH) {
+          // Succès : animation de disparition fluide
+          loginScreen.style.opacity = "0";
+          loginScreen.style.transition = "opacity 0.5s ease";
+
+          setTimeout(() => {
+            loginScreen.style.display = "none";
+            adminContent.style.display = "block";
+            adminContent.style.opacity = "0";
+            adminContent.style.transition = "opacity 0.6s ease";
+
+            setTimeout(() => {
+              adminContent.style.opacity = "1";
+            }, 100);
+          }, 500);
+        } else {
+          // Échec
+          error.textContent = "Mot de passe incorrect !";
+          error.classList.add("show");
+          document.getElementById("adminPassword").value = "";
+          document.getElementById("adminPassword").focus();
+        }
+      }
+
+      // ===============================
+      // ÉCOUTEURS D'ÉVÉNEMENTS
+      // ===============================
+      // Clic sur le bouton Valider
+      document.getElementById("loginButton").addEventListener("click", verifyPassword);
+
+      // Touche Entrée dans le champ mot de passe
+      document.getElementById("adminPassword").addEventListener("keypress", (e) => {
+        if (e.key === "Enter") {
+          verifyPassword();
+        }
+      });
+
+      // Focus automatique au chargement de la page
+      window.addEventListener("load", () => {
+        document.getElementById("adminPassword").focus();
+      });
+
+      // Optionnel : Empêche le clic droit sur l'écran de login
+      document.getElementById("loginScreen").addEventListener("contextmenu", (e) => e.preventDefault());
+    </script>
   </div>
 
   <div id="adminContent" style="display:none;">
@@ -730,7 +832,7 @@
                 case 1: return "rgba(255, 0, 0, 0.5)";
                 case 2: return "rgba(255, 165, 0, 0.5)";
                 case 3: return "rgba(0, 128, 255, 0.5)";
-                case 4: return "rgba(0, 200, 0, 0.5)";
+                case 4: return "rgba(132, 219, 132, 0.5)";
                 default: return "transparent";
               }
             }
@@ -840,32 +942,76 @@
             /* ===============================
            WRAPPER IMAGE
             ================================ */
+            /* ===============================
+   IMAGE WRAPPER (ADMIN)
+   =============================== */
             #imageWrapper {
               position: relative;
-              max-width: 900px;
+              width: min(95vw, 900px);
+              /* priorité grands écrans */
+              max-height: 80vh;
               margin: auto;
-              border-radius: 12px;
-              overflow: hidden;
-              box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-            }
 
-            /* Image responsive */
-            #sourceImage {
-              width: 100%;
-              height: auto;
-              display: block;
-              user-select: none;
-              pointer-events: none;
+              background: #000;
+              border-radius: 14px;
+              overflow: hidden;
+
+              box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+
+              /* clé de l’adaptation */
+              display: flex;
+              align-items: center;
+              justify-content: center;
             }
 
             /* ===============================
-            GRID OVERLAY
-            ================================ */
+   IMAGE SOURCE (ADMIN)
+   =============================== */
+            #sourceImage {
+              max-width: 100%;
+              max-height: 100%;
+
+              width: auto;
+              height: auto;
+
+              object-fit: contain;
+              display: block;
+
+              user-select: none;
+              pointer-events: none;
+              background: #000;
+            }
+
+            /* ===============================
+   GRID OVERLAY (ADMIN)
+   =============================== */
             #gridOverlay {
               position: absolute;
               inset: 0;
+
               display: grid;
+              grid-template-columns: repeat(10, 1fr);
+              grid-template-rows: repeat(10, 1fr);
+
+              /* IMPORTANT : admin peut cliquer */
+              pointer-events: auto;
             }
+
+            @media (max-width: 900px) {
+              #imageWrapper {
+                width: 100%;
+                max-height: 70vh;
+                border-radius: 12px;
+              }
+            }
+
+            @media (max-width: 600px) {
+              #imageWrapper {
+                max-height: 65vh;
+                border-radius: 10px;
+              }
+            }
+
 
             /* ===============================
             TILE (CARREAU)
@@ -1141,10 +1287,10 @@
 
       </div>
       <footer>
-        GSDDM LiveScore | Défi du Génie en Herbe (11ᵉ Édition) | 2025 - 2026 | V 2024.1.7 <br>
-        <div class="documents d-flex space-between"><a href="documents/GSDDM-LiveScore-Documentation.pdf"
-            target="_blank" style="color: #8a9bb8;">Documentation</a> | <a href="documents/Licence MIT.pdf"
-            target="_blank" style="color: #8a9bb8;">Licence</a></div>
+        GSDDM | 2025 - 2026 | V 2024.1.7 | Powered by AKS LiveScore <br>
+        <div class="documents d-flex space-between"><a href="documents/Documentation.pdf" target="_blank"
+            style="color: #8a9bb8;">Documentation</a> | <a href="documents/Licence MIT.pdf" target="_blank"
+            style="color: #8a9bb8;">Licence</a></div>
       </footer>
 
       <script>
@@ -1276,87 +1422,6 @@
         });
       </script>
     </div>
-    <script>
-      // ===============================
-      // HASHAGE DU MOT DE PASSE (SHA-256)
-      // ===============================
-      async function hashPassword(input) {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(input);
-        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      }
-
-      // Hash de ton mot de passe "AKS707LS"
-      const ADMIN_PASSWORD_HASH = "884fbf9dd264c4311138085e3d2ed07fe6f83fea9f0a98865727a6dfd824f734"; // AKS707LS
-
-      // ===============================
-      // VÉRIFICATION DU MOT DE PASSE
-      // ===============================
-      async function verifyPassword() {
-        const input = document.getElementById("adminPassword").value.trim();
-        const error = document.getElementById("loginError");
-        const loginScreen = document.getElementById("loginScreen");
-        const adminContent = document.getElementById("adminContent");
-
-        // Réinitialise le message d'erreur
-        error.textContent = "";
-        error.classList.remove("show");
-
-        if (!input) {
-          error.textContent = "Veuillez saisir un mot de passe.";
-          error.classList.add("show");
-          return;
-        }
-
-        const inputHash = await hashPassword(input);
-
-        if (inputHash === ADMIN_PASSWORD_HASH) {
-          // Succès : animation de disparition fluide
-          loginScreen.style.opacity = "0";
-          loginScreen.style.transition = "opacity 0.5s ease";
-
-          setTimeout(() => {
-            loginScreen.style.display = "none";
-            adminContent.style.display = "block";
-            adminContent.style.opacity = "0";
-            adminContent.style.transition = "opacity 0.6s ease";
-
-            setTimeout(() => {
-              adminContent.style.opacity = "1";
-            }, 100);
-          }, 500);
-        } else {
-          // Échec
-          error.textContent = "Mot de passe incorrect !";
-          error.classList.add("show");
-          document.getElementById("adminPassword").value = "";
-          document.getElementById("adminPassword").focus();
-        }
-      }
-
-      // ===============================
-      // ÉCOUTEURS D'ÉVÉNEMENTS
-      // ===============================
-      // Clic sur le bouton Valider
-      document.getElementById("loginButton").addEventListener("click", verifyPassword);
-
-      // Touche Entrée dans le champ mot de passe
-      document.getElementById("adminPassword").addEventListener("keypress", (e) => {
-        if (e.key === "Enter") {
-          verifyPassword();
-        }
-      });
-
-      // Focus automatique au chargement de la page
-      window.addEventListener("load", () => {
-        document.getElementById("adminPassword").focus();
-      });
-
-      // Optionnel : Empêche le clic droit sur l'écran de login
-      document.getElementById("loginScreen").addEventListener("contextmenu", (e) => e.preventDefault());
-    </script>
 
 </body>
 

@@ -1,7 +1,7 @@
 // public/js/admin.js
 const socket = io();
 
-// 
+// Variables DOM
 const selectA = document.getElementById('select-equipe-A');
 const selectB = document.getElementById('select-equipe-B');
 const scoreAEl = document.getElementById('scoreA');

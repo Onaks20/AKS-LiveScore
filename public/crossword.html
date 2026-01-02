@@ -184,14 +184,15 @@
 
 <body>
   <h1>Mots Croisés en Direct</h1>
-  <p id="status">En attente de l'administrateur...</p>
+  <p id="status">En attente de l'administrateur... <br> 
+  <small style="font-size: 12px;">Powered by AKS LiveScore</small></p>
 
   <div id="grid"></div>
   <div id="clues"></div>
 
   <script>
     const socket = io();
-    const status = document.getElementById("status");
+
     socket.on('gridUpdate', (data) => {
       if (!data || !data.table) {
         document.getElementById("status").textContent = "En attente de l'administrateur...";
