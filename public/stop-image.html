@@ -57,14 +57,10 @@
             overflow: hidden;
             box-shadow: var(--shadow);
             border: 2px solid var(--border);
-
-            /* clé magique */
             display: flex;
             align-items: center;
             justify-content: center;
         }
-
-        /* Image : elle décide du format */
         #publicImage {
             max-width: 100%;
             max-height: 100%;
@@ -74,8 +70,6 @@
             display: block;
             background: #000;
         }
-
-        /* ===== GRILLE TOUJOURS CALÉE SUR L’IMAGE ===== */
         #gridOverlay {
             position: absolute;
             inset: 0;
@@ -194,7 +188,7 @@
 
         let currentImageSrc = null;
 
-        // Création de la grille 10x10
+        // Créons de la grille 10x10
         function createGrid() {
             gridOverlay.innerHTML = "";
             for (let i = 0; i < 100; i++) {
@@ -234,16 +228,16 @@
 
             status.textContent = "Devinez l'image !";
 
-            // Nouvelle image → recréer tout
+            // Nouvelle image 
             if (data.image !== currentImageSrc) {
                 currentImageSrc = data.image;
                 publicImage.src = data.image;
                 publicImage.style.display = "block";
                 gridOverlay.style.display = "grid";
-                createGrid(); // Recrée la grille propre
+                createGrid(); 
             }
 
-            // Applique les tuiles révélées
+            // Appliquons les tuiles révélées
             applyTiles(data.tiles || []);
         });
 

@@ -11,9 +11,9 @@
   <script src="./js/display.js"></script>
 </head>
 <style>
-  /* ===============================
+  /* 
    ADMIN PANEL - DARK MODE
-   =============================== */
+    */
 
   :root {
     --primary: #012970;
@@ -190,9 +190,9 @@
     color: var(--accent);
   }
 
-  /* ===============================
+  /* 
    ÉCRAN DE CONNEXION ADMIN - LIQUID GLASS
-   =============================== */
+    */
   #loginScreen {
     position: fixed;
     inset: 0;
@@ -265,9 +265,7 @@
 
   #loginButton {
     padding: 16px 50px;
-    /* Garde ta taille généreuse */
     background: linear-gradient(90deg, #012970, #9999ff);
-    /* Ton gradient bleu magnifique */
     color: white;
     font-size: 18px;
     font-weight: 600;
@@ -292,7 +290,6 @@
 
   #loginButton:active {
     transform: translateY(2px);
-    /* Enfoncement au clic/tap → feedback immédiat */
     box-shadow: 0 6px 20px rgba(1, 41, 112, 0.5);
   }
 
@@ -386,9 +383,7 @@
       <p id="loginError"></p>
     </div>
     <script>
-      // ===============================
       // HASHAGE DU MOT DE PASSE (SHA-256)
-      // ===============================
       async function hashPassword(input) {
         const encoder = new TextEncoder();
         const data = encoder.encode(input);
@@ -400,9 +395,7 @@
       // Hash du mot de passe "AKS707LS"
       const ADMIN_PASSWORD_HASH = "884fbf9dd264c4311138085e3d2ed07fe6f83fea9f0a98865727a6dfd824f734"; // AKS707LS
 
-      // ===============================
-      // VÉRIFICATION DU MOT DE PASSE
-      // ===============================
+      // VÉRIFICATION DU MOT DE PASSE 
       async function verifyPassword() {
         const input = document.getElementById("adminPassword").value.trim();
         const error = document.getElementById("loginError");
@@ -445,9 +438,8 @@
         }
       }
 
-      // ===============================
       // ÉCOUTEURS D'ÉVÉNEMENTS
-      // ===============================
+
       // Clic sur le bouton Valider
       document.getElementById("loginButton").addEventListener("click", verifyPassword);
 
@@ -491,28 +483,14 @@
           <h3>Équipe A</h3>
           <select id="selectA">
             <option value="EQUIPE A" selected>EQUIPE A</option>
-            <option value="6ème A">6ème A</option>
-            <option value="6ème B">6ème B</option>
-            <option value="6ème C">6ème C</option>
-            <option value="6ème D">6ème D</option>
-            <option value="6ème E">6ème E</option>
-            <hr>
-            <option value="5ème A">5ème A</option>
-            <option value="5ème B">5ème B</option>
-            <option value="5ème C">5ème C</option>
-            <option value="5ème D">5ème D</option>
-            <option value="5ème E">5ème E</option>
-            <hr>
-            <option value="4ème A">4ème A</option>
-            <option value="4ème B">4ème B</option>
-            <option value="4ème C">4ème C</option>
-            <option value="4ème D">4ème D</option>
-            <option value="4ème E">4ème E</option>
-            <hr>
-            <option value="3ème A">3ème A</option>
-            <option value="3ème B">3ème B</option>
-            <option value="3ème C">3ème C</option>
-            <option value="3ème D">3ème D</option>
+            <!-- Inclusion du fichier commun -->
+            <script>
+              fetch('teams-select.html')
+                .then(response => response.text())
+                .then(data => {
+                  document.getElementById('selectA').insertAdjacentHTML('beforeend', data);
+                });
+            </script>
           </select>
           <div>
             <button onclick="updateScore('A',10)">+10</button>
@@ -530,28 +508,13 @@
           <h3>Équipe B</h3>
           <select id="selectB">
             <option value="EQUIPE B" selected>EQUIPE B</option>
-            <option value="6ème A">6ème A</option>
-            <option value="6ème B">6ème B</option>
-            <option value="6ème C">6ème C</option>
-            <option value="6ème D">6ème D</option>
-            <option value="6ème E">6ème E</option>
-            <hr>
-            <option value="5ème A">5ème A</option>
-            <option value="5ème B">5ème B</option>
-            <option value="5ème C">5ème C</option>
-            <option value="5ème D">5ème D</option>
-            <option value="5ème E">5ème E</option>
-            <hr>
-            <option value="4ème A">4ème A</option>
-            <option value="4ème B">4ème B</option>
-            <option value="4ème C">4ème C</option>
-            <option value="4ème D">4ème D</option>
-            <option value="4ème E">4ème E</option>
-            <hr>
-            <option value="3ème A">3ème A</option>
-            <option value="3ème B">3ème B</option>
-            <option value="3ème C">3ème C</option>
-            <option value="3ème D">3ème D</option>
+            <script>
+              fetch('teams-select.html')
+                .then(response => response.text())
+                .then(data => {
+                  document.getElementById('selectB').insertAdjacentHTML('beforeend', data);
+                });
+            </script>
           </select>
           <div>
             <button onclick="updateScore('B',10)">+10</button>
@@ -610,29 +573,14 @@
           <h2>Homme du Match</h2>
           <input type="text" id="hommeNom" placeholder="Nom du joueur" />
           <select id="hommeEquipe">
-            <option value="" selected>CLASSE</option>
-            <option value="6ème A">6ème A</option>
-            <option value="6ème B">6ème B</option>
-            <option value="6ème C">6ème C</option>
-            <option value="6ème D">6ème D</option>
-            <option value="6ème E">6ème E</option>
-            <hr>
-            <option value="5ème A">5ème A</option>
-            <option value="5ème B">5ème B</option>
-            <option value="5ème C">5ème C</option>
-            <option value="5ème D">5ème D</option>
-            <option value="5ème E">5ème E</option>
-            <hr>
-            <option value="4ème A">4ème A</option>
-            <option value="4ème B">4ème B</option>
-            <option value="4ème C">4ème C</option>
-            <option value="4ème D">4ème D</option>
-            <option value="4ème E">4ème E</option>
-            <hr>
-            <option value="3ème A">3ème A</option>
-            <option value="3ème B">3ème B</option>
-            <option value="3ème C">3ème C</option>
-            <option value="3ème D">3ème D</option>
+            <option value="" selected>Classe</option>
+            <script>
+              fetch('teams-select.html')
+                .then(response => response.text())
+                .then(data => {
+                  document.getElementById('hommeEquipe').insertAdjacentHTML('beforeend', data);
+                });
+            </script>
           </select>
           <button onclick="elireHomme()">Élire</button>
         </div>
@@ -643,54 +591,24 @@
           <label>Équipe A :</label>
           <select id="nextTeamA">
             <option value="" selected>EQUIPE A</option>
-            <option value="6ème A">6ème A</option>
-            <option value="6ème B">6ème B</option>
-            <option value="6ème C">6ème C</option>
-            <option value="6ème D">6ème D</option>
-            <option value="6ème E">6ème E</option>
-            <hr>
-            <option value="5ème A">5ème A</option>
-            <option value="5ème B">5ème B</option>
-            <option value="5ème C">5ème C</option>
-            <option value="5ème D">5ème D</option>
-            <option value="5ème E">5ème E</option>
-            <hr>
-            <option value="4ème A">4ème A</option>
-            <option value="4ème B">4ème B</option>
-            <option value="4ème C">4ème C</option>
-            <option value="4ème D">4ème D</option>
-            <option value="4ème E">4ème E</option>
-            <hr>
-            <option value="3ème A">3ème A</option>
-            <option value="3ème B">3ème B</option>
-            <option value="3ème C">3ème C</option>
-            <option value="3ème D">3ème D</option>
+            <script>
+              fetch('teams-select.html')
+                .then(response => response.text())
+                .then(data => {
+                  document.getElementById('nextTeamA').insertAdjacentHTML('beforeend', data);
+                });
+            </script>
           </select>
           <label>Équipe B :</label>
           <select id="nextTeamB">
             <option value="" selected>EQUIPE B</option>
-            <option value="6ème A">6ème A</option>
-            <option value="6ème B">6ème B</option>
-            <option value="6ème C">6ème C</option>
-            <option value="6ème D">6ème D</option>
-            <option value="6ème E">6ème E</option>
-            <hr>
-            <option value="5ème A">5ème A</option>
-            <option value="5ème B">5ème B</option>
-            <option value="5ème C">5ème C</option>
-            <option value="5ème D">5ème D</option>
-            <option value="5ème E">5ème E</option>
-            <hr>
-            <option value="4ème A">4ème A</option>
-            <option value="4ème B">4ème B</option>
-            <option value="4ème C">4ème C</option>
-            <option value="4ème D">4ème D</option>
-            <option value="4ème E">4ème E</option>
-            <hr>
-            <option value="3ème A">3ème A</option>
-            <option value="3ème B">3ème B</option>
-            <option value="3ème C">3ème C</option>
-            <option value="3ème D">3ème D</option>
+            <script>
+              fetch('teams-select.html')
+                .then(response => response.text())
+                .then(data => {
+                  document.getElementById('nextTeamB').insertAdjacentHTML('beforeend', data);
+                });
+            </script>
           </select>
           <button onclick="programmerMatch()">Programmer</button>
         </div>
@@ -718,9 +636,9 @@
             <div id="gridOverlay"></div>
           </div>
           <script>
-            // ===============================
+            // 
             // CONFIGURATION
-            // ===============================
+            // 
             const GRID_ROWS = 10;
             const GRID_COLS = 10;
 
@@ -735,9 +653,9 @@
               tiles: [] // { id, row, col, level }
             };
 
-            // ===============================
+            // 
             // CHARGEMENT IMAGE
-            // ===============================
+            // 
             imageInput.addEventListener("change", (e) => {
               const file = e.target.files[0];
               if (!file) return;
@@ -755,9 +673,9 @@
               reader.readAsDataURL(file);
             });
 
-            // ===============================
+            // 
             // CRÉATION GRILLE
-            // ===============================
+            // 
             function createGrid() {
               gridOverlay.innerHTML = "";
               gameState.tiles = [];
@@ -792,9 +710,9 @@
               }
             }
 
-            // ===============================
+            // 
             // TOGGLE TUILLE (sélection/désélection)
-            // ===============================
+            // 
             function toggleTile(tileElement) {
               const selectedLevel = parseInt(levelSelector.value);
               const currentLevel = tileElement.dataset.level ? parseInt(tileElement.dataset.level) : null;
@@ -824,9 +742,9 @@
               broadcastState();
             }
 
-            // ===============================
+            // 
             // COULEURS PAR NIVEAU
-            // ===============================
+            // 
             function getLevelColor(level) {
               switch (level) {
                 case 1: return "rgba(255, 0, 0, 0.5)";
@@ -837,9 +755,9 @@
               }
             }
 
-            // ===============================
+            // 
             // DIFFUSION AU SERVEUR / PUBLIC
-            // ===============================
+            // 
             function broadcastState() {
               const stateToSend = {
                 image: gameState.image,
@@ -854,9 +772,9 @@
               console.log("État diffusé :", stateToSend.tiles.length, "tuiles révélées");
             }
 
-            // ===============================
+            // 
             // RÉINITIALISATION (optionnel, ajoute un bouton si besoin)
-            // ===============================
+            // 
             function resetStopImage() {
               if (confirm("Réinitialiser l'image et toutes les révélations ?")) {
                 imageInput.value = "";
@@ -867,9 +785,9 @@
                 socket.emit("stopImageReset");
               }
             }
-            // ===============================
+            // 
             // BOUTON RÉVÉLER IMAGE COMPLÈTE & RÉVÉLER NOM
-            // ===============================
+            // 
             // Révéler toute l'image (toutes les tuiles niveau 4)
             function revelerImage() {
               if (!gameState.image) {
@@ -908,9 +826,9 @@
               console.log(`Nom envoyé au public : "${nom}"`);
             }
 
-            // ===============================
+            // 
             // RÉINITIALISER L'IMAGE ET LA GRILLE
-            // ===============================
+            // 
             function reinitialiserImage() {
               if (!confirm("Réinitialiser l'image et toutes les révélations ?")) return;
 
@@ -939,12 +857,12 @@
               cursor: pointer;
             }
 
-            /* ===============================
+            /* 
            WRAPPER IMAGE
-            ================================ */
-            /* ===============================
+            = */
+            /* 
    IMAGE WRAPPER (ADMIN)
-   =============================== */
+    */
             #imageWrapper {
               position: relative;
               width: min(95vw, 900px);
@@ -964,9 +882,9 @@
               justify-content: center;
             }
 
-            /* ===============================
+            /* 
    IMAGE SOURCE (ADMIN)
-   =============================== */
+    */
             #sourceImage {
               max-width: 100%;
               max-height: 100%;
@@ -982,9 +900,9 @@
               background: #000;
             }
 
-            /* ===============================
+            /* 
    GRID OVERLAY (ADMIN)
-   =============================== */
+    */
             #gridOverlay {
               position: absolute;
               inset: 0;
@@ -1013,9 +931,9 @@
             }
 
 
-            /* ===============================
+            /* 
             TILE (CARREAU)
-          ================================ */
+          = */
             .tile {
               border: 1px solid rgba(255, 255, 255, 0.15);
               cursor: pointer;

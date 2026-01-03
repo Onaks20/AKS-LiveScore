@@ -184,8 +184,9 @@
 
 <body>
   <h1>Mots Croisés en Direct</h1>
-  <p id="status">En attente de l'administrateur... <br> 
-  <small style="font-size: 12px;">Powered by AKS LiveScore</small></p>
+  <p id="status">En attente de l'administrateur... <br>
+    <small style="font-size: 12px;">Powered by AKS LiveScore</small>
+  </p>
 
   <div id="grid"></div>
   <div id="clues"></div>
@@ -241,30 +242,6 @@
       }
       html += '</div>';
       document.getElementById("grid").innerHTML = html;
-
-      // === INDICES ===
-      const h = [], v = [];
-      data.result.forEach(entry => {
-        const clue = data.clues[entry.position] || "Indice manquant";
-        const line = `<p><strong>${entry.position}.</strong> ${clue}</p>`;
-        if (entry.orientation === "across") {
-          h.push(line);
-        } else {
-          v.push(line);
-        }
-      });
-
-      document.getElementById("clues").innerHTML = `
-        <div class="clues-container">
-          <div class="clues-section">
-            <h3>Horizontaux</h3>
-            ${h.join('')}
-          </div>
-          <div class="clues-section">
-            <h3>Verticaux</h3>
-            ${v.join('')}
-          </div>
-        </div>`;
     });
   </script>
 </body>
