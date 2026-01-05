@@ -376,88 +376,12 @@
   <!-- ÉCRAN DE CONNEXION -->
   <div id="loginScreen">
     <div class="login-box">
-      <h1>Accès Administrateur</h1>
-      <p>Entrez le mot de passe pour accéder à la console:</p>
-      <input type="password" id="adminPassword" placeholder="Mot de passe" autofocus>
-      <button type="button" id="loginButton" style="touch-action: manipulation;">Valider</button>
+      <h1>🔒 Accès Administrateur</h1>
+      <p>Entrez le mot de passe pour accéder à la console :</p>
+      <input type="password" id="adminPassword" placeholder="Mot de passe" autofocus autocomplete="off">
+      <button type="button" id="loginButton">Valider</button>
       <p id="loginError"></p>
     </div>
-    <script>
-      // HASHAGE DU MOT DE PASSE (SHA-256)
-      async function hashPassword(input) {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(input);
-        const hashBuffer = await crypto.subtle.digest("SHA-256", data);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-      }
-
-      // Hash du mot de passe "AKS707LS"
-      const ADMIN_PASSWORD_HASH = "884fbf9dd264c4311138085e3d2ed07fe6f83fea9f0a98865727a6dfd824f734"; // AKS707LS
-
-      // VÉRIFICATION DU MOT DE PASSE 
-      async function verifyPassword() {
-        const input = document.getElementById("adminPassword").value.trim();
-        const error = document.getElementById("loginError");
-        const loginScreen = document.getElementById("loginScreen");
-        const adminContent = document.getElementById("adminContent");
-
-        // Réinitialise le message d'erreur
-        error.textContent = "";
-        error.classList.remove("show");
-
-        if (!input) {
-          error.textContent = "Veuillez saisir un mot de passe.";
-          error.classList.add("show");
-          return;
-        }
-
-        const inputHash = await hashPassword(input);
-
-        if (inputHash === ADMIN_PASSWORD_HASH) {
-          // Succès : animation de disparition fluide
-          loginScreen.style.opacity = "0";
-          loginScreen.style.transition = "opacity 0.5s ease";
-
-          setTimeout(() => {
-            loginScreen.style.display = "none";
-            adminContent.style.display = "block";
-            adminContent.style.opacity = "0";
-            adminContent.style.transition = "opacity 0.6s ease";
-
-            setTimeout(() => {
-              adminContent.style.opacity = "1";
-            }, 100);
-          }, 500);
-        } else {
-          // Échec
-          error.textContent = "Mot de passe incorrect !";
-          error.classList.add("show");
-          document.getElementById("adminPassword").value = "";
-          document.getElementById("adminPassword").focus();
-        }
-      }
-
-      // ÉCOUTEURS D'ÉVÉNEMENTS
-
-      // Clic sur le bouton Valider
-      document.getElementById("loginButton").addEventListener("click", verifyPassword);
-
-      // Touche Entrée dans le champ mot de passe
-      document.getElementById("adminPassword").addEventListener("keypress", (e) => {
-        if (e.key === "Enter") {
-          verifyPassword();
-        }
-      });
-
-      // Focus automatique au chargement de la page
-      window.addEventListener("load", () => {
-        document.getElementById("adminPassword").focus();
-      });
-
-      // Optionnel : Empêche le clic droit sur l'écran de login
-      document.getElementById("loginScreen").addEventListener("contextmenu", (e) => e.preventDefault());
-    </script>
   </div>
 
   <div id="adminContent" style="display:none;">
@@ -1339,6 +1263,89 @@
           socket.emit('saveScore', { teamA, teamB, aScore, bScore });
         });
       </script>
+      <script>
+        // Hash SHA-256 du mot de passe "AKS707LS"
+        const ADMIN_PASSWORD_HASH = "884fbf9dd264c4311138085e3d2ed07fe6f83fea9f0a98865727a6dfd824f734";
+
+        async function hashPassword(input) {
+          try {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(input);
+            const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+          } catch (e) {
+            console.warn("crypto.subtle indisponible – fallback temporaire");
+            return input;
+          }
+        }
+
+        async function verifyPassword() {
+          const input = document.getElementById("adminPassword").value.trim();
+          const error = document.getElementById("loginError");
+
+          error.textContent = "";
+          error.classList.remove("show");
+
+          if (!input) {
+            error.textContent = "Veuillez saisir un mot de passe.";
+            error.classList.add("show");
+            return;
+          }
+
+          const inputHash = await hashPassword(input);
+          const isValid = inputHash === ADMIN_PASSWORD_HASH || input === "AKS707LS"; // Fallback clair
+
+          if (isValid) {
+            const loginScreen = document.getElementById("loginScreen");
+            const adminContent = document.getElementById("adminContent");
+
+            loginScreen.style.opacity = "0";
+            loginScreen.style.transition = "opacity 0.5s ease";
+
+            setTimeout(() => {
+              loginScreen.style.display = "none";
+              adminContent.style.display = "block";
+              adminContent.style.opacity = "0";
+              adminContent.style.transition = "opacity 0.6s ease";
+              setTimeout(() => adminContent.style.opacity = "1", 100);
+            }, 500);
+          } else {
+            error.textContent = "Mot de passe incorrect !";
+            error.classList.add("show");
+            document.getElementById("adminPassword").value = "";
+            document.getElementById("adminPassword").focus();
+          }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+          const loginButton = document.getElementById("loginButton");
+          const passwordInput = document.getElementById("adminPassword");
+
+          if (loginButton) {
+            loginButton.addEventListener("click", verifyPassword);
+            loginButton.addEventListener("touchstart", (e) => {
+              e.preventDefault();
+              verifyPassword();
+            });
+          }
+
+          if (passwordInput) {
+            passwordInput.addEventListener("keypress", (e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                verifyPassword();
+              }
+            });
+            passwordInput.focus();
+          }
+        });
+
+        // Empêche clic droit
+        document.getElementById("loginScreen")?.addEventListener("contextmenu", (e) => e.preventDefault());
+      </script>
+
+
     </div>
 
 </body>
