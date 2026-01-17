@@ -1133,6 +1133,34 @@
         <div class="documents d-flex space-between"><a href="documents/Documentation.pdf" target="_blank"
             style="color: #8a9bb8;">Documentation</a> | <a href="documents/Licence MIT.pdf" target="_blank"
             style="color: #8a9bb8;">Licence</a></div>
+        <br>
+        <button id="resetServerBtn" class="reset-btn"> <i class="fas fa-rotate-right" style="width: 100%;"></i></button>
+        <style>
+          .reset-btn {
+            background: linear-gradient(90deg, #f11010, #ff8c8c);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            font-weight: bold;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+          }
+
+          .reset-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 30px rgba(255, 75, 75, 0.6);
+            background-color: red;
+          }
+        </style>
+        <script>
+          document.getElementById("resetServerBtn").addEventListener("click", () => {
+            if (confirm("Voulez-vous vraiment réinitialiser TOUTES les données ?\nScores, matchs, jeux seront effacés.")) {
+              socket.emit("resetServer");
+              alert("Réinitialisation envoyée au serveur...");
+            }
+          });
+        </script>
       </footer>
 
       <script>

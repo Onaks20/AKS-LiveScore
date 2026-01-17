@@ -576,7 +576,6 @@
             socket.on('updateScheduledMatches', list => {
                 if (!Array.isArray(list)) return;
                 upcoming = list;
-                // update totals display, upcoming list
                 renderUpcoming();
                 totalMatches.textContent = (matches.length + upcoming.length);
             });
@@ -584,7 +583,6 @@
             // homme du match (admin elect)
             socket.on('updateManOfMatch', payload => {
                 if (!payload) return;
-                // payload may be {nom, equipe} or a string
                 if (typeof payload === 'string') manOfMatch.textContent = payload;
                 else manOfMatch.textContent = `${payload.nom || payload.name || '—'}${payload.equipe ? ' (' + payload.equipe + ')' : ''}`;
             });

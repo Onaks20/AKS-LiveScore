@@ -24,15 +24,15 @@ let matches = [];
 let crosswordGame = {
   table: null,
   result: null,
-  clues: {},            // position → indice
-  revealedWords: {}     // position → mot révélé
+  clues: {},        
+  revealedWords: {} 
 };
 
 // Arrêt sur Image
 let stopImageGame = {
   image: null,
   grid: { rows: 10, cols: 10 },
-  tiles: []             // { id: number, level: 1|2|3|4 }
+  tiles: [] 
 };
 
 // ==============================
@@ -195,6 +195,35 @@ io.on("connection", (socket) => {
   safeOn(socket, "revealName", (name) => {
     console.log(`Nom correct diffusé : "${name}"`);
     io.emit("displayCorrectName", name);
+  });
+
+
+  // ==============================
+  // Reset Serveur
+  // ==============================
+
+  socket.on("resetServer", () => {
+    // Réinitialise toutes les variables globales / états du serveur
+    scores = { A: 0, B: 0 };
+    currentMatch = null;
+    matchHistory = [];
+    programmedMatches = [];
+    revealedWords = {};
+    revealedTiles = [];
+    currentImage = null;
+    message = "";
+
+    // Optionnel : vide les données des jeux
+    crosswordData = null;
+    stopImageData = null;
+
+    // Informe TOUS les clients connectés
+    io.emit("serverReset", { message: "Le serveur a été réinitialisé par l'administrateur." });
+
+    // Ajoutons option recharger la page public sur tous les clients
+    io.emit("reloadPublic");
+
+    console.log("Serveur réinitialisé par admin");
   });
 
   // ==============================

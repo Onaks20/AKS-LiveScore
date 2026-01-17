@@ -1,28 +1,28 @@
 ──────────────────────────────────────────────
-  GSDDM LiveScore – Licence d’utilisation interne
+  AKS LiveScore – Licence d’utilisation interne
 ──────────────────────────────────────────────
 
-- Projet : GSDDM LiveScore  
+- Projet : AKS LiveScore  
 - Version : v2024.2.7 (Stable)  
-- Auteurs principaux : Abdou Karim Soumaré & Ablaye Dia  
+- Auteurs principaux : Abdou Karim Soumaré 
 - Contact : abdoukarimsoumare97@gmail.com  
 - Copyright (c) 2024  
-  Abdou Karim Soumaré & Ablaye Dia  
-  Groupe Scolaire David Diop Mendes (GSDDM)
+  Abdou Karim Soumaré 
+  Groupe Scolaire David Diop Mendes (AKS)
 
 ──────────────────────────────────────────────
-  LICENCE D’UTILISATION INTERNE – GSDDM
+  LICENCE D’UTILISATION INTERNE – AKS
 ──────────────────────────────────────────────
 
 ### 1. Usage autorisé
-Ce logiciel est strictement réservé à un usage **interne** au **Groupe Scolaire David Diop Mendes (GSDDM)**.  
+Ce logiciel est strictement réservé à un usage **interne** au **Groupe Scolaire David Diop Mendes (AKS)**.  
 Il peut être utilisé, copié, modifié et redistribué **uniquement au sein de l’établissement**,  
 par les élèves, enseignants et équipes techniques autorisées, génération après génération.
 
 ---
 
 ### 2. Restrictions
-Toute utilisation, diffusion, publication, vente ou partage de ce logiciel **en dehors du GSDDM**  
+Toute utilisation, diffusion, publication, vente ou partage de ce logiciel **en dehors du AKS**  
 est **formellement interdite**, sauf **autorisation écrite explicite** des auteurs principaux.  
 
 Le code source, les fichiers associés et les éléments visuels du projet ne peuvent pas être :
@@ -55,7 +55,7 @@ MÊME DANS LE CADRE SCOLAIRE.
 ---
 
 ### 6. Transmission générationnelle
-Le projet **GSDDM LiveScore** est conçu pour être transmis **de génération en génération**  
+Le projet **AKS LiveScore** est conçu pour être transmis **de génération en génération**  
 au sein du Groupe Scolaire David Diop Mendes.  
 Chaque promotion est responsable de :
 - sa maintenance,
@@ -63,6 +63,6 @@ Chaque promotion est responsable de :
 - et du respect de cette licence.
 
 ──────────────────────────────────────────────
-✨ GSDDM LiveScore – Un héritage scolaire et numérique ✨
+✨ AKS LiveScore – Un héritage scolaire et numérique ✨
 ──────────────────────────────────────────────
-© 2024 Abdou Karim Soumaré & Ablaye Dia | Tous droits réservés
+© 2024 Abdou Karim Soumaré| Tous droits réservés
